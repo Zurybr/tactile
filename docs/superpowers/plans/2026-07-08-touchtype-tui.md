@@ -32,8 +32,8 @@
 
 **Steps:**
 
-- [ ] `uv init --package --name touchtype` style scaffold (or write pyproject by hand), then `uv add textual` and `uv add --dev pytest pytest-asyncio`.
-- [ ] `pyproject.toml` must contain: `requires-python = ">=3.12"`, project script `touchtype = "touchtype.__main__:main"`, and:
+- [x] `uv init --package --name touchtype` style scaffold (or write pyproject by hand), then `uv add textual` and `uv add --dev pytest pytest-asyncio`.
+- [x] `pyproject.toml` must contain: `requires-python = ">=3.12"`, project script `touchtype = "touchtype.__main__:main"`, and:
 
 ```toml
 [tool.pytest.ini_options]
@@ -41,10 +41,10 @@ asyncio_mode = "auto"
 testpaths = ["tests"]
 ```
 
-- [ ] `src/touchtype/__init__.py`: `__version__ = "0.1.0"`.
-- [ ] `src/touchtype/__main__.py` minimal `main()` with argparse: `--version` prints `touchtype 0.1.0` and exits 0; no args prints `touchtype: TUI launch comes in a later task` for now (replaced in Task 6); subcommand `practice <path>` parsed but same placeholder message (replaced in Task 8).
-- [ ] Verify: `uv run python -m touchtype --version` -> `touchtype 0.1.0`; `uv run pytest -q` -> "no tests ran" is acceptable here.
-- [ ] Commit: `chore: scaffold touchtype package with uv`
+- [x] `src/touchtype/__init__.py`: `__version__ = "0.1.0"`.
+- [x] `src/touchtype/__main__.py` minimal `main()` with argparse: `--version` prints `touchtype 0.1.0` and exits 0; no args prints `touchtype: TUI launch comes in a later task` for now (replaced in Task 6); subcommand `practice <path>` parsed but same placeholder message (replaced in Task 8).
+- [x] Verify: `uv run python -m touchtype --version` -> `touchtype 0.1.0`; `uv run pytest -q` -> "no tests ran" is acceptable here.
+- [x] Commit: `chore: scaffold touchtype package with uv`
 
 ### Task 2: Typing engine (pure, strict TDD)
 
