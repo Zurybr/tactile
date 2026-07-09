@@ -10,6 +10,8 @@ via `BINDINGS` and shown in the Textual `Footer`.
 | `enter` | Results | Return to the lesson map (refreshes lock/star state). | `Binding("enter", "continue", "Back to map")` |
 | `escape` | Practice | Abort the run and return to the lesson map. Nothing is recorded. | `Binding("escape", "back_to_map", "Back to map")` |
 | `escape` | File picker | Cancel and return to the lesson map. | `Binding("escape", "cancel", "Back to map")` |
+| `+` | Practice | Cycle the text-size preset up (S -> M -> L -> S). Changes container width + text weight, not glyph pixels; use the terminal emulator's zoom (Ctrl++ / Ctrl+-) for true zoom. | `Binding("plus", "cycle_size_up", "Size +")` |
+| `-` | Practice | Cycle the text-size preset down (S -> L -> M -> S). Same width + weight semantics as `+`. | `Binding("minus", "cycle_size_down", "Size -")` |
 | `r` | Results | Retry the same unit from exercise 1. | `Binding("r", "retry", "Retry unit")` |
 | `p` | Lesson map | Open the file picker (`DirectoryTree` over the cwd) for code practice. | `Binding("p", "practice_file", "Practice a file")` |
 | `l` | Lesson map | Change keyboard layout (pushes the layout select screen). | `Binding("l", "change_layout", "Change layout")` |
