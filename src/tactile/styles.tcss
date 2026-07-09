@@ -40,3 +40,22 @@ OptionList {
     padding: 1 2;
     text-align: center;
 }
+
+/* Text-size presets (size-m = base styles, no rule needed). Large widens
+   to 96% and bolds; small narrows to 80% and dims. Width + weight only —
+   terminals cannot scale glyph pixels (use the terminal emulator's zoom). */
+PracticeScreen.size-l #practice-title,
+PracticeScreen.size-l #practice-stats,
+PracticeScreen.size-l #practice-text,
+PracticeScreen.size-l #practice-keyboard {
+    width: 96%;
+    text-style: bold;
+}
+
+PracticeScreen.size-s #practice-title,
+PracticeScreen.size-s #practice-stats,
+PracticeScreen.size-s #practice-text,
+PracticeScreen.size-s #practice-keyboard {
+    width: 80%;
+    text-style: dim;
+}

@@ -120,6 +120,57 @@ The `keyboard_layout` is stored as `self.keyboard_layout`, **not**
 `self.layout`, because `layout` is a reserved `Widget` property (see
 [project/textual.md](../project/textual.md#widgetlayout-is-a-reserved-property)).
 
+#### Text-size presets
+
+A user-controlled text-size preference cycles through three presets — **S**
+(small), **M** (medium, default), **L** (large) — via the `+` and `-` keys.
+Each preset swaps a CSS class on the screen (`size-s` / `size-m` / `size-l`)
+that adjusts **container width + text weight**, not glyph pixels (terminals
+cannot scale glyphs — true zoom is the terminal emulator's job, e.g.
+`Ctrl++` / `Ctrl+-`):
+
+| Preset | Class | Width | Text weight |
+|--------|-------|-------|-------------|
+| S | `size-s` | 80% | dim |
+| M | `size-m` (base, no rule) | 90% | normal |
+| L | `size-l` | 96% | bold |
+
+```css
+PracticeScreen.size-l #practice-title, /* ...stats/text/keyboard */ { width: 96%; text-style: bold; }
+PracticeScreen.size-s #practice-title, /* ...stats/text/keyboard */ { width: 80%; text-style: dim; }
+```
+
+Implementation on `PracticeScreen`:
+
+```python
+_SIZE_ORDER = ("S", "M", "L")
+size_preset = reactive("M")
+
+def watch_size_preset(self, preset):       # swap class + persist
+    self._apply_size_class(preset)
+    self.store.set_setting("size", preset)
+def action_cycle_size_up(self):            # S -> M -> L -> S
+    i = _SIZE_ORDER.index(self.size_preset)
+    self.size_preset = _SIZE_ORDER[(i + 1) % len(_SIZE_ORDER)]
+def action_cycle_size_down(self):          # S -> L -> M -> S
+    i = _SIZE_ORDER.index(self.size_preset)
+    self.size_preset = _SIZE_ORDER[(i - 1) % len(_SIZE_ORDER)]
+```
+
+Notes:
+
+- **Key handling**: `+` and `-` arrive in `on_key` as printable chars
+  (`event.key == "plus"` / `"minus"`). The handler returns early for them so
+  they reach the `plus` / `minus` bindings instead of being typed into the
+  `TypingSession`. As a consequence, `+` / `-` cannot be *typed* during
+  practice (accepted trade-off; the curriculum drills neither).
+- **Persistence**: `on_mount` loads `store.get_setting("size", "M")`,
+  validates it against `{S, M, L}`, and falls back to `M` on any other value.
+  The validated preset is written back through `set_setting`, so it survives
+  restart (see [progress.md](progress.md#settings-block)).
+- **M has no CSS rule**: the base styles (90%, normal weight) apply; the
+  `size-m` class is still applied for observability but targets no rule.
+
 ### `ResultsScreen`
 
 Shows the aggregate unit result: title, `render_stars`, WPM, accuracy, and

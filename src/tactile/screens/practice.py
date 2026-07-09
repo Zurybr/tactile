@@ -8,6 +8,7 @@ from rich.text import Text
 from textual import events
 from textual.app import ComposeResult
 from textual.binding import Binding
+from textual.reactive import reactive
 from textual.screen import Screen
 from textual.widgets import Footer, Static
 
@@ -24,10 +25,22 @@ class ExerciseResult(NamedTuple):
     stars: int
 
 
+# Text-size presets: cycle S -> M -> L -> S. Each maps to a CSS class
+# (size-s / size-m / size-l) that adjusts container width + text weight.
+# Terminals cannot scale glyph pixels; presets change width + weight only.
+_SIZE_ORDER: tuple[str, ...] = ("S", "M", "L")
+
+
 class PracticeScreen(Screen):
     """Runs a unit's exercises through a TypingSession, one exercise at a time."""
 
-    BINDINGS = [Binding("escape", "back_to_map", "Back to map")]
+    BINDINGS = [
+        Binding("escape", "back_to_map", "Back to map"),
+        Binding("plus", "cycle_size_up", "Size +"),
+        Binding("minus", "cycle_size_down", "Size -"),
+    ]
+
+    size_preset = reactive("M")
 
     def __init__(
         self,
@@ -59,11 +72,20 @@ class PracticeScreen(Screen):
 
     def on_mount(self) -> None:
         self._stats_timer = self.set_interval(0.5, self._update_stats)
+        stored = self.store.get_setting("size", "M")
+        if stored not in _SIZE_ORDER:
+            stored = "M"
+        self.size_preset = stored
+        # Apply the class unconditionally so a default/invalid "M" still tags
+        # the screen (the reactive watch does not fire on a no-op set).
+        self._apply_size_class(self.size_preset)
         self._refresh_all()
 
     def on_key(self, event: events.Key) -> None:
         if event.key == "escape":
             return  # let the screen binding handle navigation
+        if event.key in ("plus", "minus"):
+            return  # let the size-cycling bindings handle it; do not type them
         if event.key == "enter":
             self._last_key_was_wrong = self.session.on_key("\n") is False
         elif event.key == "backspace":
@@ -82,6 +104,25 @@ class PracticeScreen(Screen):
 
     def action_back_to_map(self) -> None:
         self.app.practice_abort()  # type: ignore[attr-defined]
+
+    def action_cycle_size_up(self) -> None:
+        # S -> M -> L -> S
+        i = _SIZE_ORDER.index(self.size_preset)
+        self.size_preset = _SIZE_ORDER[(i + 1) % len(_SIZE_ORDER)]
+
+    def action_cycle_size_down(self) -> None:
+        # S -> L -> M -> S (reverse, wrapping)
+        i = _SIZE_ORDER.index(self.size_preset)
+        self.size_preset = _SIZE_ORDER[(i - 1) % len(_SIZE_ORDER)]
+
+    def watch_size_preset(self, preset: str) -> None:
+        self._apply_size_class(preset)
+        self.store.set_setting("size", preset)
+
+    def _apply_size_class(self, preset: str) -> None:
+        for code in _SIZE_ORDER:
+            self.remove_class(f"size-{code.lower()}")
+        self.add_class(f"size-{preset.lower()}")
 
     def _finish_exercise(self) -> None:
         session = self.session

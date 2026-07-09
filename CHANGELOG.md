@@ -15,6 +15,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   with `>= 2` stars lights up the completion badges of every earlier lesson
   across all units globally (the completion cascade), shown via a separate
   `is_completion_unlocked` lock icon.
+- **S/M/L text-size presets** (`screens/practice.py`, `styles.tcss`): cycle
+  the practice-screen preset via `+`/`-` (wraps S -> M -> L -> S). Each
+  preset swaps a CSS class that adjusts container width + text weight
+  (L = 96% bold, M = 90% normal default, S = 80% dim) — terminals cannot
+  scale glyph pixels, so use the terminal emulator's zoom for true zoom.
+  The choice persists in `settings.size` and falls back to M on an invalid
+  stored value. Documented in `docs/reference/keybinds.md`.
 - **Centered practice-screen layout** (`styles.tcss`): title, stats, practice
   text, and keyboard now resolve to `text-align: center` for visual
   consistency. The results body stays centred as before. Ergonomics note
