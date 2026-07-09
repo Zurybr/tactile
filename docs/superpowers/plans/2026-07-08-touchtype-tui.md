@@ -187,9 +187,9 @@ KEY_ORDER_ES = [
 
 (Unit titles for es_la are Spanish because they are curriculum CONTENT for Spanish-layout learners, not UI chrome — UI chrome stays English.)
 
-- [ ] Failing tests first: `LAYOUTS` has both ids; en_us `char_map["f"].finger == "left index"` and row/col of home keys; es_la home row list equals `["a","s","d","f","g","h","j","k","l","ñ"]`; `char_map["{"].modifier` is `"shift"` in en_us and `"altgr"` in es_la; `char_map["á"].modifier == "dead"` in es_la; every char used in every `key_order` entry is `typable()`; no char appears in two different `key_order` entries of the same layout; uppercase letters resolve to the base key with `modifier="shift"`.
-- [ ] Red -> implement -> green.
-- [ ] Commit: `feat: add en_us and es_la keyboard layout data`
+- [x] Failing tests first: `LAYOUTS` has both ids; en_us `char_map["f"].finger == "left index"` and row/col of home keys; es_la home row list equals `["a","s","d","f","g","h","j","k","l","ñ"]`; `char_map["{"].modifier` is `"shift"` in en_us and `"altgr"` in es_la (**deviation**: verified against the real KBDLA layout — es_la `{`/`}` are actually the unshifted base chars, `[`/`]` are their shift; `@` via AltGr+Q is the es_la altgr example instead, see es_la.py docstring); `char_map["á"].modifier == "dead"` in es_la; every char used in every `key_order` entry is `typable()`; no char appears in two different `key_order` entries of the same layout; uppercase letters resolve to the base key with `modifier="shift"`.
+- [x] Red -> implement -> green.
+- [x] Commit: `feat: add en_us and es_la keyboard layout data`
 
 ### Task 4: Curriculum generator + wordlists
 
