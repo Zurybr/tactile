@@ -1,23 +1,59 @@
 # Progress schema
 
 The on-disk format of `~/.tactile/progress.json`, as written and read by
-`ProgressStore` (`src/tactile/progress.py`). Schema version 1.
+`ProgressStore` (`src/tactile/progress.py`). Schema version 2.
 
 ## Top-level shape
 
 ```json
 {
-  "version": 1,
+  "version": 2,
   "active_layout": null,
-  "layouts": {}
+  "layouts": {},
+  "settings": {}
 }
 ```
 
 | Field | Type | Meaning |
 |-------|------|---------|
-| `version` | `int` | Schema version. Currently `1`. A missing or mismatched version triggers the corrupt-file path (the file is backed up and a fresh store starts). |
+| `version` | `int` | Schema version. Currently `2`. A `1` (or missing) version migrates forward on load; an unparseable / non-object / unknown-future version triggers the corrupt-file path (the file is backed up and a fresh store starts). |
 | `active_layout` | `string \| null` | The layout id the user last picked (`"en_us"` or `"es_la"`). `null` on first run. |
 | `layouts` | `object` | Per-layout progress, keyed by layout id. Empty on first run. |
+| `settings` | `object` | Free-form key/value user preferences. Added in v2 (default `{}`). Currently holds `size` (the S/M/L text-size preset). |
+
+## Per-layout object
+
+```json
+"en_us": {
+  "lessons": {
+    "en_us-01": {"stars": 4, "best_wpm": 32.5, "best_acc": 97.2}
+  },
+  "key_errors": {"f": 12, ";": 40}
+}
+```
+
+| Field | Type | Meaning |
+|-------|------|---------|
+| `lessons` | `object` | Map of unit id → best-result entry. Absent if a unit has never been completed. |
+| `lessons.<unit_id>.stars` | `int` | Best star rating (0-5) achieved for that unit. Kept as `max(existing, new)`. |
+| `lessons.<unit_id>.best_wpm` | `float` | Best net WPM achieved for that unit. Kept as `max`. |
+| `lessons.<unit_id>.best_acc` | `float` | Best accuracy (%) achieved for that unit. Kept as `max`. |
+| `key_errors` | `object` | Map of expected char → accumulated wrong attempts. Only ever grows. |
+
+## The `settings` block
+
+```json
+"settings": {
+  "size": "L"
+}
+```
+
+| Key | Type | Meaning |
+|-----|------|---------|
+| `size` | `string` | Text-size preset on the practice screen: `"S"`, `"M"` (default), or `"L"`. Read/written via `get_setting` / `set_setting`. An invalid persisted value falls back to `"M"`. |
+
+Settings is the single home for cross-session UI preferences. It is always
+present in v2 (added by migration if absent) and read defensively.
 
 ## Per-layout object
 
@@ -56,7 +92,7 @@ the lesson number of the lesson that triggered them.
 
 ```json
 {
-  "version": 1,
+  "version": 2,
   "active_layout": "en_us",
   "layouts": {
     "en_us": {
@@ -71,6 +107,9 @@ the lesson number of the lesson that triggered them.
       "lessons": {},
       "key_errors": {}
     }
+  },
+  "settings": {
+    "size": "M"
   }
 }
 ```
@@ -85,14 +124,20 @@ the lesson number of the lesson that triggered them.
 - **Per-exercise breakdowns** are not kept; only the aggregate unit result
   (min stars, mean WPM, mean accuracy) is stored.
 
-## Atomicity and corruption
+## Atomicity, migration, and corruption
 
 - Writes are atomic: the store writes `progress.json.tmp` and then
   `os.replace`s it onto `progress.json`.
-- A missing file starts a fresh default state.
-- A file that fails JSON parsing, has the wrong `version`, or cannot be
-  decoded is renamed to `progress.json.bak` (via `os.replace`) and a fresh
-  state starts. The app never crashes on load.
+- A missing file starts a fresh default state (v2).
+- **v1 -> v2 migration** (forward-only, idempotent): if the file's `version`
+  is `1` or missing, the store copies the file to `progress.json.bak`
+  (via `shutil.copy2`, so the original is preserved) and migrates the
+  in-memory state forward — `version` → `2`, `settings` added if absent, all
+  `layouts` / `lessons` / `key_errors` preserved verbatim. A v1 file is
+  **not** treated as corrupt.
+- A file that fails JSON parsing, has a non-object root, or carries an
+  unknown future version is renamed to `progress.json.bak` (via `os.replace`)
+  and a fresh v2 state starts. The app never crashes on load.
 - Deleting `~/.tactile/progress.json` resets all progress.
 
 See [engineering/progress.md](../engineering/progress.md) for the

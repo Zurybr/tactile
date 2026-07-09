@@ -74,14 +74,19 @@ A scrollable `OptionList` of a layout's units. Each row shows:
 <lock> <stars>  <unit title>  (<best wpm> wpm)
 ```
 
-- **lock** — a space if unlocked, `🔒` if locked. Locked rows are disabled.
+- **lock** — a space if completion-unlocked, `🔒` if completion-locked.
+  Driven by `store.is_completion_unlocked(...)` (derived from `>= 2` stars),
+  **not** by clickability.
 - **stars** — `render_stars(stars)` (5 slots, `★`/`☆`).
 - **best wpm** — `best_wpm_for(...)`, or `--- wpm` when unseen.
 
-`refresh_options()` rebuilds the list and lands the cursor on the first
-unlocked unit. It is called on mount and again when a results screen returns
-(`results_continue`), so a freshly earned 2+ stars unlocks the next row
-immediately.
+Every row is **clickable** — free navigation means `is_unlocked` is always
+`True`, so no row is ever disabled. The lock is a display badge only.
+
+`refresh_options()` rebuilds the list and lands the cursor on unit `0`. It
+is called on mount and again when a results screen returns
+(`results_continue`), so a freshly earned `>= 2` stars immediately lights up
+the completion badges of every earlier row (the completion cascade).
 
 Bindings: `q` quit, `l` change layout, `p` practice a file. `enter` opens
 the highlighted unit via `app.open_practice`.

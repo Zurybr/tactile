@@ -15,7 +15,10 @@ class ProgressStore:
     def record_key_errors(self, layout_id, key_errors) -> None   # code practice only
     def stars_for(self, layout_id, unit_id) -> int               # 0 when unseen
     def best_wpm_for(self, layout_id, unit_id) -> float          # 0.0 when unseen
-    def is_unlocked(self, layout_id, unit_index, units) -> bool
+    def is_unlocked(self, layout_id, unit_index, units) -> bool  # always True (free nav)
+    def is_completion_unlocked(self, layout_id, unit_index, units) -> bool
+    def get_setting(self, key, default)                          # read settings block
+    def set_setting(self, key, value) -> None                    # write + persist
     def key_errors(self, layout_id) -> dict[str, int]
 ```
 
@@ -25,12 +28,15 @@ never touch the real progress file.
 
 ## JSON schema
 
-Schema version 1. Stored at `~/.tactile/progress.json`:
+Schema version 2. Stored at `~/.tactile/progress.json`:
 
 ```json
 {
-  "version": 1,
+  "version": 2,
   "active_layout": "en_us",
+  "settings": {
+    "size": "M"
+  },
   "layouts": {
     "en_us": {
       "lessons": {
@@ -49,8 +55,9 @@ Schema version 1. Stored at `~/.tactile/progress.json`:
 
 | Field | Type | Meaning |
 |-------|------|---------|
-| `version` | `int` | schema version, currently `1`. A mismatch triggers the corrupt-file path. |
+| `version` | `int` | schema version, currently `2`. A `1`/missing version migrates forward on load; an unparseable / non-object / unknown-future version triggers the corrupt-file path. |
 | `active_layout` | `str \| null` | the last layout the user picked; `null` on first run. |
+| `settings` | `object` | free-form UI preferences (added in v2). Holds `size` (the S/M/L preset). |
 | `layouts.<id>.lessons.<unit_id>.stars` | `int` | best star rating (0-5) for that unit. |
 | `layouts.<id>.lessons.<unit_id>.best_wpm` | `float` | best net WPM achieved. |
 | `layouts.<id>.lessons.<unit_id>.best_acc` | `float` | best accuracy achieved. |
@@ -99,55 +106,128 @@ def _save(self) -> None:
 on the same filesystem. A test asserts no `.tmp` file is left behind after
 a write.
 
-## Corrupt-file handling
+## Corrupt-file and legacy-file handling
 
-A missing, unparseable, or wrong-version file never crashes the app:
+A missing, unparseable, or wrong-version file never crashes the app. The
+load path branches on the parsed `version`:
 
 ```python
 def _load(self) -> dict[str, Any]:
     if not self._path.exists():
-        return _default_state()
+        return _default_state()                          # fresh v2
     try:
         data = json.loads(self._path.read_text(encoding="utf-8"))
-        if not isinstance(data, dict) or data.get("version") != _SCHEMA_VERSION:
-            raise ValueError("unsupported or missing progress schema version")
+        if not isinstance(data, dict):
+            raise ValueError("progress file root is not a JSON object")
     except (json.JSONDecodeError, ValueError, OSError, UnicodeDecodeError):
-        self._backup_corrupt_file()
+        self._backup_corrupt_file()                      # rename to .bak
         return _default_state()
-    return data
+
+    version = data.get("version")
+    if version == _SCHEMA_VERSION:                       # v2
+        data.setdefault("settings", {})
+        return data
+    if version == 1 or version is None:                  # legacy v1
+        self._backup_v1_file()                           # COPY to .bak
+        return _migrate_v1_to_v2(data)
+    self._backup_corrupt_file()                          # unknown future
+    return _default_state()
 ```
 
-The corrupt file is renamed to `progress.json.bak` (via `os.replace`), and a
-fresh default state is started:
+A truly corrupt file (unparseable / non-object / unknown-future-version) is
+**renamed** to `progress.json.bak` and a fresh default state starts:
 
 ```python
 def _backup_corrupt_file(self) -> None:
     backup_path = self._path.with_suffix(self._path.suffix + ".bak")
     try:
-        os.replace(self._path, backup_path)
+        os.replace(self._path, backup_path)              # move
+    except OSError:
+        pass
+```
+
+A legacy **v1** file is **not** corrupt — it is migrated forward. The v1
+file is **copied** (not moved) to `.bak` before the first v2 write, so the
+original bytes survive even if a save never fires:
+
+```python
+def _backup_v1_file(self) -> None:
+    backup_path = self._path.with_suffix(self._path.suffix + ".bak")
+    try:
+        shutil.copy2(self._path, backup_path)            # copy
     except OSError:
         pass
 ```
 
 So a user who deletes or corrupts their file loses their stars, but the app
-keeps running. Deleting `~/.tactile/progress.json` resets all progress.
+keeps running. A v1 user keeps their stars/bests through the v1->v2
+migration. Deleting `~/.tactile/progress.json` resets all progress.
 
-## Sequential unlocking
+### v1 -> v2 migration
+
+```python
+def _migrate_v1_to_v2(data: dict[str, Any]) -> dict[str, Any]:
+    data["version"] = 2
+    data.setdefault("settings", {})
+    return data
+```
+
+Forward-only and idempotent: re-running on already-v2 state is a no-op
+(`version` stays `2`, `settings` stays present). All `layouts` / `lessons` /
+`key_errors` are preserved verbatim — migration only adds the `settings`
+block and bumps the version. A test asserts that running the migrator twice
+yields byte-identical state.
+
+## Settings block
+
+The `settings` object holds cross-session UI preferences, read/written
+through a small typed accessor pair:
+
+```python
+def get_setting(self, key, default):
+    return self._state.get("settings", {}).get(key, default)
+
+def set_setting(self, key, value) -> None:
+    self._state.setdefault("settings", {})[key] = value
+    self._save()
+```
+
+Currently `settings.size` stores the practice-screen S/M/L text-size preset
+(see [tui-screens.md](tui-screens.md#text-size-presets)). Invalid persisted
+values are validated by the caller, not the store.
+
+## Free lesson navigation (attemptable vs completion-unlocked)
+
+There are **two** unlock concepts, kept deliberately separate:
 
 ```python
 def is_unlocked(self, layout_id, unit_index, units) -> bool:
+    return True                                          # any lesson attemptable
+
+def is_completion_unlocked(self, layout_id, unit_index, units) -> bool:
     if unit_index == 0:
         return True
-    previous_unit = units[unit_index - 1]
-    return self.stars_for(layout_id, previous_unit.id) >= 2
+    if self.stars_for(layout_id, units[unit_index].id) >= 2:
+        return True
+    return any(
+        self.stars_for(layout_id, units[j].id) >= 2
+        for j in range(unit_index + 1, len(units))
+    )
 ```
 
-- The first unit (index 0) is always unlocked.
-- Every later unit unlocks when the **previous** unit has >= 2 stars.
-- Replays are always allowed (locked units are disabled in the lesson map,
-  but an unlocked unit stays replayable even after you move on).
+- **`is_unlocked`** — gates clickability. It is **always True**: every
+  lesson, review, and speedtest is attemptable in any order, with no
+  previous-unit requirement. The lesson map never disables a row.
+- **`is_completion_unlocked`** — drives the **lock badge** (the `🔒` icon)
+  and is **derived** from `stars >= 2`:
+  - index `0` is always completion-unlocked;
+  - a unit with `>= 2` stars is completion-unlocked;
+  - the **completion cascade**: if any *later* unit `j > unit_index` has
+    `>= 2` stars, every earlier unit is shown completion-unlocked globally
+    (completing one lesson retroactively marks all earlier lessons done).
 
-The lesson map reads `is_unlocked` per row and disables locked rows; the
-cursor lands on the first unlocked unit on mount. When a results screen
-returns to the map, `results_continue` calls `refresh_options()` so a newly
-earned 2+ stars immediately unlocks the next row.
+No separate `completed_lessons` list is persisted — completion is derived
+from the existing per-unit stars. The lesson-map cursor lands on unit `0`
+on mount; `refresh_options()` is called again when a results screen returns
+(`results_continue`), so a freshly earned `>= 2` stars immediately lights
+up the completion badges of every earlier row.
