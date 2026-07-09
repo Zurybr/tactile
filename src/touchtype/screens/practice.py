@@ -27,6 +27,7 @@ class PracticeScreen(Screen):
         exercise_index: int,
         layout: Layout,
         store: ProgressStore,
+        record_progress: bool = True,
     ) -> None:
         super().__init__()
         self.unit = unit
@@ -35,6 +36,7 @@ class PracticeScreen(Screen):
         # keyboard layout is stored under a different attribute name.
         self.keyboard_layout = layout
         self.store = store
+        self.record_progress = record_progress
         self.session = TypingSession(unit.exercises[exercise_index].text)
         self._exercise_results: list[tuple[float, float, int]] = []  # (acc, net_wpm, stars)
         self._unit_key_errors: dict[str, int] = {}
@@ -97,14 +99,19 @@ class PracticeScreen(Screen):
         wpm = sum(wpms) / len(wpms)
         worst_keys = sorted(self._unit_key_errors.items(), key=lambda kv: (-kv[1], kv[0]))[:3]
 
-        self.store.record(
-            self.keyboard_layout.id,
-            self.unit.id,
-            stars=stars,
-            wpm=wpm,
-            accuracy=accuracy,
-            key_errors=self._unit_key_errors,
-        )
+        if self.record_progress:
+            self.store.record(
+                self.keyboard_layout.id,
+                self.unit.id,
+                stars=stars,
+                wpm=wpm,
+                accuracy=accuracy,
+                key_errors=self._unit_key_errors,
+            )
+        else:
+            # Code practice: results are shown but never stored as lesson
+            # progress - only the key-error heatmap accumulates.
+            self.store.record_key_errors(self.keyboard_layout.id, self._unit_key_errors)
         self.app.show_results(  # type: ignore[attr-defined]
             self.keyboard_layout.id, self.unit, stars, wpm, accuracy, worst_keys
         )

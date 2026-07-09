@@ -371,9 +371,9 @@ def load_code_exercises(path: Path) -> tuple[list[Exercise], list[str]]:
 - `FilePickerScreen`: Textual `DirectoryTree` over cwd; selecting a file loads exercises and opens `PracticeScreen` with a synthetic `Unit(kind="lesson", id=f"code:{path.name}", wpm_target=30.0, ...)`; code results are shown but NOT recorded to lesson progress (record only key_errors).
 - `touchtype practice <path>`: app opens directly into the first code exercise (layout: active or en_us fallback without prompting).
 
-- [ ] Failing tests first for every rule above (tmp files; include a latin-1 file, a tabbed+indented Python sample, an 8-line file -> 1 exercise, a 25-line file -> 3 exercises).
-- [ ] Red -> implement -> green. Manual check: `uv run python -m touchtype practice src/touchtype/engine.py` boots into typing.
-- [ ] Commit: `feat: add code-file practice mode with CLI entry and file picker`
+- [x] Failing tests first for every rule above (tmp files; include a latin-1 file, a tabbed+indented Python sample, an 8-line file -> 1 exercise, a 25-line file -> 3 exercises).
+- [x] Red -> implement -> green. Manual check: `uv run python -m touchtype practice src/touchtype/engine.py` boots into typing. (**Adapted**: the interactive boot is covered headlessly by the Pilot test `test_cli_practice_file_boots_into_code_practice`, which drives the same `TouchTypeApp(practice_file=...)` path the CLI uses; the CLI missing-file branch was exercised for real: exits 1 with `touchtype: file not found: ...`.)
+- [x] Commit: `feat: add code-file practice mode with CLI entry and file picker`
 
 ### Task 9: Final wiring, README, full verification
 

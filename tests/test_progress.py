@@ -85,6 +85,20 @@ def test_best_wpm_for_returns_zero_when_unseen_and_best_after_record(tmp_path: P
     assert store.best_wpm_for("en_us", "en_us-01") == 28.5
 
 
+def test_record_key_errors_accumulates_without_touching_lessons(tmp_path: Path):
+    path = tmp_path / "progress.json"
+    store = ProgressStore(path)
+    store.record_key_errors("en_us", {"f": 2, "j": 1})
+    store.record_key_errors("en_us", {"f": 1})
+
+    reloaded = ProgressStore(path)
+    assert reloaded.key_errors("en_us") == {"f": 3, "j": 1}
+    # No lesson entry may appear as a side effect.
+    assert reloaded.stars_for("en_us", "code:sample.py") == 0
+    raw = path.read_text(encoding="utf-8")
+    assert '"lessons": {}' in raw
+
+
 def test_atomic_write_does_not_leave_tmp_file_behind(tmp_path: Path):
     path = tmp_path / "progress.json"
     store = ProgressStore(path)

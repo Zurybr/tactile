@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import argparse
+import sys
+from pathlib import Path
 
 from touchtype import __version__
 
@@ -26,11 +28,15 @@ def main() -> None:
         print(f"touchtype {__version__}")
         return
 
-    if args.command == "practice":
-        print("touchtype: TUI launch comes in a later task")
-        return
-
     from touchtype.app import TouchTypeApp
+
+    if args.command == "practice":
+        practice_path = Path(args.path)
+        if not practice_path.is_file():
+            print(f"touchtype: file not found: {practice_path}", file=sys.stderr)
+            sys.exit(1)
+        TouchTypeApp(practice_file=practice_path).run()
+        return
 
     TouchTypeApp().run()
 

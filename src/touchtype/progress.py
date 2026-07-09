@@ -87,6 +87,13 @@ class ProgressStore:
             accumulated[key] = accumulated.get(key, 0) + count
         self._save()
 
+    def record_key_errors(self, layout_id: str, key_errors: dict[str, int]) -> None:
+        """Accumulate key errors without creating a lesson entry (code practice)."""
+        accumulated = self._layout_state(layout_id).setdefault("key_errors", {})
+        for key, count in key_errors.items():
+            accumulated[key] = accumulated.get(key, 0) + count
+        self._save()
+
     def stars_for(self, layout_id: str, unit_id: str) -> int:
         entry = self._state.get("layouts", {}).get(layout_id, {}).get("lessons", {}).get(unit_id)
         return entry["stars"] if entry else 0
