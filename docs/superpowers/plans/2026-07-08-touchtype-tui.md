@@ -263,9 +263,9 @@ class ProgressStore:
 
 Schema exactly as in the spec (`version: 1`). Atomic write: write `progress.json.tmp` then `os.replace`. Corrupt JSON: rename existing file to `progress.json.bak` and start fresh.
 
-- [ ] Failing tests first (use `tmp_path`): fresh store defaults; record + reload round-trip; best-keeping (lower later score does not overwrite stars/wpm bests, key_errors still accumulate); unlock logic (0 unlocked, 1 locked until unit 0 has >=2 stars); corrupt file -> `.bak` created and store usable; atomic tmp file not left behind.
-- [ ] Red -> implement -> green.
-- [ ] Commit: `feat: add JSON progress store with star unlocking and atomic writes`
+- [x] Failing tests first (use `tmp_path`): fresh store defaults; record + reload round-trip; best-keeping (lower later score does not overwrite stars/wpm bests, key_errors still accumulate); unlock logic (0 unlocked, 1 locked until unit 0 has >=2 stars); corrupt file -> `.bak` created and store usable; atomic tmp file not left behind.
+- [x] Red -> implement -> green.
+- [x] Commit: `feat: add JSON progress store with star unlocking and atomic writes`
 
 ### Task 6: Textual app shell — layout select + lesson map
 
