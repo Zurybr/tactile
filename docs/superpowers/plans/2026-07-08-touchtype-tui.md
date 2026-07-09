@@ -105,10 +105,10 @@ def test_completion_and_stars():
 
 Plus: accuracy math with mixed wrong/right attempts; stars ladder at the 90/95/97/99 boundaries (parametrize); `stars()` returns 0 when incomplete; backspace at 0 is a no-op; backspace after a correct char requires retyping it; newline handling; `elapsed == 0.0` and wpm 0.0 before first key; extra `on_key` after completion is ignored (returns False, no metric change).
 
-- [ ] Run `uv run pytest tests/test_engine.py -q` -> all FAIL (module missing).
-- [ ] Implement `engine.py` minimally to pass. Timer starts on the first keystroke event. Guard divisions by zero.
-- [ ] `uv run pytest -q` -> PASS.
-- [ ] Commit: `feat: add pure typing engine with edclub cursor model and star rating`
+- [x] Run `uv run pytest tests/test_engine.py -q` -> all FAIL (module missing).
+- [x] Implement `engine.py` minimally to pass. Timer starts on the first keystroke event. Guard divisions by zero.
+- [x] `uv run pytest -q` -> PASS.
+- [x] Commit: `feat: add pure typing engine with edclub cursor model and star rating`
 
 ### Task 3: Layout data (en_us, es_la)
 
