@@ -382,10 +382,10 @@ def load_code_exercises(path: Path) -> tuple[list[Exercise], list[str]]:
 
 **Steps:**
 
-- [ ] README: what it is, install (`uv sync`), run (`uv run touchtype`), practice a file, run tests, progress file location, both layouts note. Short.
-- [ ] Full suite: `uv run pytest -q` -> ALL PASS.
-- [ ] `uv run python -m touchtype --version` -> `touchtype 0.1.0`; `uv run touchtype --help` works (console script).
-- [ ] Commit: `docs: add README with usage instructions`
+- [x] README: what it is, install (`uv sync`), run (`uv run touchtype`), practice a file, run tests, progress file location, both layouts note. Short.
+- [x] Full suite: `uv run pytest -q` -> ALL PASS (76 passed).
+- [x] `uv run python -m touchtype --version` -> `touchtype 0.1.0`; `uv run touchtype --help` works (console script).
+- [x] Commit: `docs: add README with usage instructions`
 
 ## Self-Review (done at plan time)
 
