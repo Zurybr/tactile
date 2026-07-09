@@ -12,6 +12,8 @@ from touchtype.layouts import LAYOUTS
 from touchtype.progress import ProgressStore
 from touchtype.screens.layout_select import LayoutSelectScreen
 from touchtype.screens.lesson_map import LessonMapScreen
+from touchtype.screens.practice import PracticeScreen
+from touchtype.screens.results import ResultsScreen
 
 if TYPE_CHECKING:
     from touchtype.curriculum import Unit
@@ -60,6 +62,33 @@ class TouchTypeApp(App):
         self.notify("File picker coming in a later task")
 
     def open_practice(self, layout_id: str, unit: Unit) -> None:
-        # Wired up in a later task (practice + results screens).
         self.current_unit = unit
-        self.notify(f"Practice screen coming in a later task: {unit.title}")
+        self.push_screen(
+            PracticeScreen(unit=unit, exercise_index=0, layout=LAYOUTS[layout_id], store=self.store)
+        )
+
+    def show_results(
+        self,
+        layout_id: str,
+        unit: Unit,
+        stars: int,
+        wpm: float,
+        accuracy: float,
+        worst_keys: list[tuple[str, int]],
+    ) -> None:
+        self.push_screen(ResultsScreen(layout_id, unit, stars, wpm, accuracy, worst_keys))
+
+    def practice_abort(self) -> None:
+        self.pop_screen()  # PracticeScreen -> back to the lesson map
+
+    def results_continue(self) -> None:
+        self.pop_screen()  # ResultsScreen
+        self.pop_screen()  # PracticeScreen
+        screen = self.screen
+        if isinstance(screen, LessonMapScreen):
+            screen.refresh_options()
+
+    def results_retry(self, layout_id: str, unit: Unit) -> None:
+        self.pop_screen()  # ResultsScreen
+        self.pop_screen()  # PracticeScreen
+        self.open_practice(layout_id, unit)

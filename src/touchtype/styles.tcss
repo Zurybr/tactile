@@ -8,3 +8,31 @@ OptionList {
     height: 90%;
     border: round $primary;
 }
+
+#practice-title {
+    width: 90%;
+    text-style: bold;
+    padding: 1 0 0 0;
+}
+
+#practice-stats {
+    width: 90%;
+    color: $text-muted;
+}
+
+#practice-text {
+    width: 90%;
+    padding: 1 0;
+}
+
+#practice-keyboard {
+    width: 90%;
+    padding: 1 0;
+}
+
+#results-body {
+    width: 60%;
+    border: round $primary;
+    padding: 1 2;
+    text-align: center;
+}

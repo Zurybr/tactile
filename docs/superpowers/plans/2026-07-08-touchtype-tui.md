@@ -73,7 +73,7 @@ class TypingSession:
 
 Semantics: `on_key("\n")` matches a newline target char. Backspace decrements position (the char must be retyped) and does not erase recorded errors. Clock is injected so tests control time: pass a fake `clock` callable returning controlled floats; `elapsed` = now - time of first `on_key`/`on_backspace` keystroke.
 
-- [ ] **Write failing tests first** — cover at minimum:
+- [x] **Write failing tests first** — cover at minimum:
 
 ```python
 def make(target="fj fj", t=[0.0]):
@@ -288,7 +288,7 @@ class TouchTypeApp(App):
 - `styles.tcss`: minimal, dark-friendly; keep it small.
 - `__main__.py`: no-arg case now runs `TouchTypeApp().run()`.
 
-- [ ] Failing Pilot test first:
+- [x] Failing Pilot test first:
 
 ```python
 async def test_first_run_shows_layout_select_then_map(tmp_path):
@@ -322,7 +322,7 @@ Plus: second run (store with active_layout preset) goes straight to the map; uni
 - On exercise completion: if more exercises remain, advance within the unit (running stats reset per exercise; unit result aggregates: mean accuracy, mean net wpm, min stars across exercises). After the last exercise: `store.record(...)` with the aggregate and the union of key_errors, then push `ResultsScreen`.
 - `ResultsScreen(unit, stars, wpm, accuracy, worst_keys)` shows `★★★☆☆`, WPM, ACC, top-3 error keys; bindings: `r` retry unit, `enter` back to map (map refreshes lock/star states).
 
-- [ ] Failing Pilot test first — full happy path:
+- [x] Failing Pilot test first — full happy path:
 
 ```python
 async def test_type_through_first_exercise_earns_stars(tmp_path):
@@ -342,8 +342,10 @@ async def test_type_through_first_exercise_earns_stars(tmp_path):
 ```
 
 (Space is pressed as `"space"` in Pilot — map chars: `" "` -> `"space"`.) Also test: wrong key does not advance (press a wrong char, screen still expects same char); escape returns to map without recording.
-- [ ] Red -> implement -> green.
-- [ ] Commit: `feat: add practice loop with live stats, on-screen keyboard and results`
+- [x] Red -> implement -> green.
+- [x] Commit: `feat: add practice loop with live stats, on-screen keyboard and results`
+
+**Deviation**: `layout` is a reserved read-only property on Textual's `Widget` (the layout engine), so `PracticeScreen` and `KeyboardWidget` accept `layout` as the constructor argument per the planned interface but store it internally as `self.keyboard_layout`.
 
 ### Task 8: Code-file practice mode
 
