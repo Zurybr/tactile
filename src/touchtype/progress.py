@@ -23,6 +23,11 @@ def _default_state() -> dict[str, Any]:
     return {"version": _SCHEMA_VERSION, "active_layout": None, "layouts": {}}
 
 
+def _accumulate_key_errors(bucket: dict[str, int], key_errors: dict[str, int]) -> None:
+    for key, count in key_errors.items():
+        bucket[key] = bucket.get(key, 0) + count
+
+
 class ProgressStore:
     def __init__(self, path: Path | None = None) -> None:
         self._path = path or _DEFAULT_PATH
@@ -82,24 +87,24 @@ class ProgressStore:
             "best_wpm": max(existing["best_wpm"], wpm),
             "best_acc": max(existing["best_acc"], accuracy),
         }
-        accumulated = layout_state.setdefault("key_errors", {})
-        for key, count in key_errors.items():
-            accumulated[key] = accumulated.get(key, 0) + count
+        _accumulate_key_errors(layout_state.setdefault("key_errors", {}), key_errors)
         self._save()
 
     def record_key_errors(self, layout_id: str, key_errors: dict[str, int]) -> None:
         """Accumulate key errors without creating a lesson entry (code practice)."""
-        accumulated = self._layout_state(layout_id).setdefault("key_errors", {})
-        for key, count in key_errors.items():
-            accumulated[key] = accumulated.get(key, 0) + count
+        bucket = self._layout_state(layout_id).setdefault("key_errors", {})
+        _accumulate_key_errors(bucket, key_errors)
         self._save()
 
+    def _lesson_entry(self, layout_id: str, unit_id: str) -> dict[str, Any] | None:
+        return self._state.get("layouts", {}).get(layout_id, {}).get("lessons", {}).get(unit_id)
+
     def stars_for(self, layout_id: str, unit_id: str) -> int:
-        entry = self._state.get("layouts", {}).get(layout_id, {}).get("lessons", {}).get(unit_id)
+        entry = self._lesson_entry(layout_id, unit_id)
         return entry["stars"] if entry else 0
 
     def best_wpm_for(self, layout_id: str, unit_id: str) -> float:
-        entry = self._state.get("layouts", {}).get(layout_id, {}).get("lessons", {}).get(unit_id)
+        entry = self._lesson_entry(layout_id, unit_id)
         return entry["best_wpm"] if entry else 0.0
 
     def is_unlocked(self, layout_id: str, unit_index: int, units: list[Unit]) -> bool:

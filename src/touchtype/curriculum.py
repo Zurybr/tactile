@@ -26,6 +26,13 @@ _LESSON_DRILL_TARGET_LEN = 60
 _LESSON_WORDS_TARGET_LEN = 60
 _LESSON_STREAM_TARGET_LEN = 100
 _LONG_STREAM_LETTER_THRESHOLD = 12
+_WPM_TARGET_MIN = 10.0
+_WPM_TARGET_MAX = 40.0
+
+
+def _rng(layout_id: str, unit_index: int, exercise_index: int) -> random.Random:
+    """The single source of the documented seed format for all curriculum randomness."""
+    return random.Random(f"{layout_id}:{unit_index}:{exercise_index}")
 
 
 @dataclass(frozen=True)
@@ -97,8 +104,9 @@ def build_curriculum(layout: Layout, words: list[str]) -> list[Unit]:
 
 def _wpm_target(index: int, total: int) -> float:
     if total <= 1:
-        return 10.0
-    return round(10.0 + (40.0 - 10.0) * index / (total - 1), 1)
+        return _WPM_TARGET_MIN
+    ramp = (_WPM_TARGET_MAX - _WPM_TARGET_MIN) * index / (total - 1)
+    return round(_WPM_TARGET_MIN + ramp, 1)
 
 
 def _build_lesson_exercises(
@@ -111,13 +119,13 @@ def _build_lesson_exercises(
 ) -> tuple[Exercise, ...]:
     texts: list[str] = []
 
-    rng0 = random.Random(f"{layout_id}:{unit_index}:0")
+    rng0 = _rng(layout_id, unit_index, 0)
     texts.append(_drill_tokens(rng0, new_chars, _LESSON_DRILL_TARGET_LEN))
 
-    rng1 = random.Random(f"{layout_id}:{unit_index}:1")
+    rng1 = _rng(layout_id, unit_index, 1)
     texts.append(_drill_mixed(rng1, new_chars, pool, _LESSON_DRILL_TARGET_LEN))
 
-    rng2 = random.Random(f"{layout_id}:{unit_index}:2")
+    rng2 = _rng(layout_id, unit_index, 2)
     is_capitals = new_chars.isupper()
     is_symbol_only = bool(new_chars) and not any(c.isalpha() for c in new_chars)
     if is_capitals:
@@ -131,7 +139,7 @@ def _build_lesson_exercises(
 
     distinct_letters = {c for c in pool if c.isalpha()}
     if len(distinct_letters) >= _LONG_STREAM_LETTER_THRESHOLD:
-        rng3 = random.Random(f"{layout_id}:{unit_index}:3")
+        rng3 = _rng(layout_id, unit_index, 3)
         texts.append(_word_exercise(rng3, pool, words, _LESSON_STREAM_TARGET_LEN))
 
     return tuple(Exercise(text=_finalize(t, layout)) for t in texts)
@@ -142,7 +150,7 @@ def _build_review_exercises(
 ) -> tuple[Exercise, ...]:
     texts: list[str] = []
     for exercise_index in range(_REVIEW_EXERCISE_COUNT):
-        rng = random.Random(f"{layout_id}:{unit_index}:{exercise_index}")
+        rng = _rng(layout_id, unit_index, exercise_index)
         texts.append(_word_exercise(rng, pool, words, _REVIEW_TARGET_LEN))
     return tuple(Exercise(text=_finalize(t, layout)) for t in texts)
 
@@ -150,7 +158,7 @@ def _build_review_exercises(
 def _build_speedtest_exercise(
     layout: Layout, pool: frozenset[str], words: list[str], layout_id: str, unit_index: int
 ) -> tuple[Exercise, ...]:
-    rng = random.Random(f"{layout_id}:{unit_index}:0")
+    rng = _rng(layout_id, unit_index, 0)
     text = _word_exercise(rng, pool, words, _SPEEDTEST_TARGET_LEN)
     return (Exercise(text=_finalize(text, layout)),)
 

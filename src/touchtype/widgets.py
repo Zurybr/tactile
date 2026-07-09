@@ -7,6 +7,13 @@ from textual.widgets import Static
 
 from touchtype.layouts import Layout
 
+_STAR_SLOTS = 5
+
+
+def render_stars(stars: int) -> str:
+    """Render a 5-slot star bar, e.g. 3 -> '★★★☆☆'."""
+    return "★" * stars + "☆" * (_STAR_SLOTS - stars)
+
 
 class KeyboardWidget(Static):
     """Renders the layout's key caps and highlights the next expected key."""

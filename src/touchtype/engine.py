@@ -100,15 +100,16 @@ class TypingSession:
     def stars(self, wpm_target: float) -> int:
         if not self.is_complete:
             return 0
+        two_star_acc, three_star_acc, four_star_acc, five_star_acc = _STAR_ACCURACY_THRESHOLDS
         accuracy = self.accuracy
         wpm = self.net_wpm
         result = 1
-        if accuracy >= _STAR_ACCURACY_THRESHOLDS[0]:
+        if accuracy >= two_star_acc:
             result = 2
-        if accuracy >= _STAR_ACCURACY_THRESHOLDS[1]:
+        if accuracy >= three_star_acc:
             result = 3
-        if accuracy >= _STAR_ACCURACY_THRESHOLDS[2] and wpm >= wpm_target:
+        if accuracy >= four_star_acc and wpm >= wpm_target:
             result = 4
-        if accuracy >= _STAR_ACCURACY_THRESHOLDS[3] and wpm >= wpm_target:
+        if accuracy >= five_star_acc and wpm >= wpm_target:
             result = 5
         return result

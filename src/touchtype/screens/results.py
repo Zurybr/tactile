@@ -9,10 +9,10 @@ from textual.binding import Binding
 from textual.screen import Screen
 from textual.widgets import Footer, Static
 
+from touchtype.widgets import render_stars
+
 if TYPE_CHECKING:
     from touchtype.curriculum import Unit
-
-_STAR_SLOTS = 5
 
 
 class ResultsScreen(Screen):
@@ -31,6 +31,7 @@ class ResultsScreen(Screen):
         wpm: float,
         accuracy: float,
         worst_keys: list[tuple[str, int]],
+        record_progress: bool = True,
     ) -> None:
         super().__init__()
         self.layout_id = layout_id
@@ -39,9 +40,10 @@ class ResultsScreen(Screen):
         self.wpm = wpm
         self.accuracy = accuracy
         self.worst_keys = worst_keys
+        self.record_progress = record_progress
 
     def compose(self) -> ComposeResult:
-        star_line = "★" * self.stars + "☆" * (_STAR_SLOTS - self.stars)
+        star_line = render_stars(self.stars)
         lines = [
             self.unit.title,
             "",
@@ -58,7 +60,9 @@ class ResultsScreen(Screen):
         yield Footer()
 
     def action_retry(self) -> None:
-        self.app.results_retry(self.layout_id, self.unit)  # type: ignore[attr-defined]
+        self.app.results_retry(  # type: ignore[attr-defined]
+            self.layout_id, self.unit, record_progress=self.record_progress
+        )
 
     def action_continue(self) -> None:
         self.app.results_continue()  # type: ignore[attr-defined]

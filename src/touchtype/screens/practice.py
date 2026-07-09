@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import NamedTuple
+
 from rich.text import Text
 from textual import events
 from textual.app import ComposeResult
@@ -14,6 +16,12 @@ from touchtype.engine import TypingSession
 from touchtype.layouts import Layout
 from touchtype.progress import ProgressStore
 from touchtype.widgets import KeyboardWidget
+
+
+class ExerciseResult(NamedTuple):
+    accuracy: float
+    net_wpm: float
+    stars: int
 
 
 class PracticeScreen(Screen):
@@ -38,7 +46,7 @@ class PracticeScreen(Screen):
         self.store = store
         self.record_progress = record_progress
         self.session = TypingSession(unit.exercises[exercise_index].text)
-        self._exercise_results: list[tuple[float, float, int]] = []  # (acc, net_wpm, stars)
+        self._exercise_results: list[ExerciseResult] = []
         self._unit_key_errors: dict[str, int] = {}
         self._last_key_was_wrong = False
 
@@ -78,7 +86,11 @@ class PracticeScreen(Screen):
     def _finish_exercise(self) -> None:
         session = self.session
         self._exercise_results.append(
-            (session.accuracy, session.net_wpm, session.stars(self.unit.wpm_target))
+            ExerciseResult(
+                accuracy=session.accuracy,
+                net_wpm=session.net_wpm,
+                stars=session.stars(self.unit.wpm_target),
+            )
         )
         for key, count in session.key_errors.items():
             self._unit_key_errors[key] = self._unit_key_errors.get(key, 0) + count
@@ -92,9 +104,9 @@ class PracticeScreen(Screen):
             return
 
         self._stats_timer.stop()
-        accuracies = [result[0] for result in self._exercise_results]
-        wpms = [result[1] for result in self._exercise_results]
-        stars = min(result[2] for result in self._exercise_results)
+        accuracies = [result.accuracy for result in self._exercise_results]
+        wpms = [result.net_wpm for result in self._exercise_results]
+        stars = min(result.stars for result in self._exercise_results)
         accuracy = sum(accuracies) / len(accuracies)
         wpm = sum(wpms) / len(wpms)
         worst_keys = sorted(self._unit_key_errors.items(), key=lambda kv: (-kv[1], kv[0]))[:3]
@@ -113,7 +125,13 @@ class PracticeScreen(Screen):
             # progress - only the key-error heatmap accumulates.
             self.store.record_key_errors(self.keyboard_layout.id, self._unit_key_errors)
         self.app.show_results(  # type: ignore[attr-defined]
-            self.keyboard_layout.id, self.unit, stars, wpm, accuracy, worst_keys
+            self.keyboard_layout.id,
+            self.unit,
+            stars,
+            wpm,
+            accuracy,
+            worst_keys,
+            record_progress=self.record_progress,
         )
 
     def _refresh_all(self) -> None:

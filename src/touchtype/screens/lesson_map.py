@@ -10,11 +10,11 @@ from textual.screen import Screen
 from textual.widgets import Footer, Header, OptionList
 from textual.widgets.option_list import Option
 
+from touchtype.widgets import render_stars
+
 if TYPE_CHECKING:
     from touchtype.curriculum import Unit
     from touchtype.progress import ProgressStore
-
-_STAR_SLOTS = 5
 
 
 class LessonMapScreen(Screen):
@@ -75,6 +75,5 @@ class LessonMapScreen(Screen):
 
 def _format_row(unit: Unit, stars: int, best_wpm: float, unlocked: bool) -> str:
     lock = " " if unlocked else "\U0001f512"
-    star_str = "★" * stars + "☆" * (_STAR_SLOTS - stars)
     wpm_str = f"{best_wpm:.0f} wpm" if best_wpm else "--- wpm"
-    return f"{lock} {star_str}  {unit.title}  ({wpm_str})"
+    return f"{lock} {render_stars(stars)}  {unit.title}  ({wpm_str})"

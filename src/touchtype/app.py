@@ -61,9 +61,8 @@ class TouchTypeApp(App):
     def show_file_picker(self) -> None:
         self.push_screen(FilePickerScreen())
 
-    def open_practice(self, layout_id: str, unit: Unit) -> None:
+    def open_practice(self, layout_id: str, unit: Unit, record_progress: bool = True) -> None:
         self.current_unit = unit
-        record_progress = not unit.id.startswith("code:")
         self.push_screen(
             PracticeScreen(
                 unit=unit,
@@ -92,7 +91,7 @@ class TouchTypeApp(App):
             wpm_target=30.0,
             exercises=tuple(exercises),
         )
-        self.open_practice(layout_id, unit)
+        self.open_practice(layout_id, unit, record_progress=False)
         for notice in notices:
             self.notify(notice)
 
@@ -104,8 +103,13 @@ class TouchTypeApp(App):
         wpm: float,
         accuracy: float,
         worst_keys: list[tuple[str, int]],
+        record_progress: bool = True,
     ) -> None:
-        self.push_screen(ResultsScreen(layout_id, unit, stars, wpm, accuracy, worst_keys))
+        self.push_screen(
+            ResultsScreen(
+                layout_id, unit, stars, wpm, accuracy, worst_keys, record_progress=record_progress
+            )
+        )
 
     def practice_abort(self) -> None:
         self.pop_screen()  # PracticeScreen -> back to the lesson map
@@ -117,7 +121,7 @@ class TouchTypeApp(App):
         if isinstance(screen, LessonMapScreen):
             screen.refresh_options()
 
-    def results_retry(self, layout_id: str, unit: Unit) -> None:
+    def results_retry(self, layout_id: str, unit: Unit, record_progress: bool = True) -> None:
         self.pop_screen()  # ResultsScreen
         self.pop_screen()  # PracticeScreen
-        self.open_practice(layout_id, unit)
+        self.open_practice(layout_id, unit, record_progress=record_progress)
