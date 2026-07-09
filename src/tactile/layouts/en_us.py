@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from touchtype.layouts import Layout, build_char_map
+from tactile.layouts import Layout, build_char_map
 
 _ROWS: list[list[str]] = [
     list("`1234567890-="),

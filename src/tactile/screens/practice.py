@@ -11,11 +11,11 @@ from textual.binding import Binding
 from textual.screen import Screen
 from textual.widgets import Footer, Static
 
-from touchtype.curriculum import Unit
-from touchtype.engine import TypingSession
-from touchtype.layouts import Layout
-from touchtype.progress import ProgressStore
-from touchtype.widgets import KeyboardWidget
+from tactile.curriculum import Unit
+from tactile.engine import TypingSession
+from tactile.layouts import Layout
+from tactile.progress import ProgressStore
+from tactile.widgets import KeyboardWidget
 
 
 class ExerciseResult(NamedTuple):

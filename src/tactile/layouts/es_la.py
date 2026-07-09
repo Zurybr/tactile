@@ -16,7 +16,7 @@ digits are right, which they are.
 
 from __future__ import annotations
 
-from touchtype.layouts import Layout, add_dead_key_vowels, build_char_map
+from tactile.layouts import Layout, add_dead_key_vowels, build_char_map
 
 _ROWS: list[list[str]] = [
     list("|1234567890'¿"),

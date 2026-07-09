@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from touchtype.layouts import LAYOUTS
+from tactile.layouts import LAYOUTS
 
 
 def test_layouts_has_both_ids():

@@ -14,7 +14,7 @@ import random
 from dataclasses import dataclass
 from typing import Literal
 
-from touchtype.layouts import Layout
+from tactile.layouts import Layout
 
 _VOWELS = set("aeiouáéíóúü")
 _WORDLIST_FILES = {"en_us": "en.txt", "es_la": "es.txt"}
@@ -52,7 +52,7 @@ class Unit:
 
 def load_wordlist(layout_id: str) -> list[str]:
     filename = _WORDLIST_FILES[layout_id]
-    package_files = importlib.resources.files("touchtype.wordlists")
+    package_files = importlib.resources.files("tactile.wordlists")
     text = package_files.joinpath(filename).read_text(encoding="utf-8")
     return [line.strip() for line in text.splitlines() if line.strip()]
 

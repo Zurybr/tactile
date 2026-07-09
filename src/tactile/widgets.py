@@ -5,7 +5,7 @@ from __future__ import annotations
 from rich.text import Text
 from textual.widgets import Static
 
-from touchtype.layouts import Layout
+from tactile.layouts import Layout
 
 _STAR_SLOTS = 5
 

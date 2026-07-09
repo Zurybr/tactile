@@ -5,7 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 from types import SimpleNamespace
 
-from touchtype.progress import ProgressStore
+from tactile.progress import ProgressStore
 
 
 def test_fresh_store_has_defaults(tmp_path: Path):

@@ -13,10 +13,10 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
-    from touchtype.curriculum import Unit
+    from tactile.curriculum import Unit
 
 _SCHEMA_VERSION = 1
-_DEFAULT_PATH = Path.home() / ".touchtype" / "progress.json"
+_DEFAULT_PATH = Path.home() / ".tactile" / "progress.json"
 
 
 def _default_state() -> dict[str, Any]:

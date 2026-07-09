@@ -15,8 +15,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from touchtype.curriculum import Exercise
-from touchtype.layouts import Layout
+from tactile.curriculum import Exercise
+from tactile.layouts import Layout
 
 _MAX_LINES = 2000
 _LINES_PER_EXERCISE = 10

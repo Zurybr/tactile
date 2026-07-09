@@ -9,10 +9,10 @@ from textual.binding import Binding
 from textual.screen import Screen
 from textual.widgets import Footer, Static
 
-from touchtype.widgets import render_stars
+from tactile.widgets import render_stars
 
 if TYPE_CHECKING:
-    from touchtype.curriculum import Unit
+    from tactile.curriculum import Unit
 
 
 class ResultsScreen(Screen):

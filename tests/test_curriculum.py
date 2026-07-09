@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from touchtype.curriculum import build_curriculum, load_wordlist
-from touchtype.layouts import LAYOUTS
+from tactile.curriculum import build_curriculum, load_wordlist
+from tactile.layouts import LAYOUTS
 
 _SAMPLE_WORDS = [
     "the", "and", "for", "are", "but", "not", "you", "all", "can", "had",

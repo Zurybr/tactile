@@ -6,7 +6,7 @@ from textual.app import ComposeResult
 from textual.screen import Screen
 from textual.widgets import Footer, Header, OptionList
 
-from touchtype.layouts import LAYOUTS
+from tactile.layouts import LAYOUTS
 
 _LAYOUT_IDS: list[str] = list(LAYOUTS.keys())
 

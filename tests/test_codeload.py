@@ -4,9 +4,9 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from touchtype.app import TouchTypeApp
-from touchtype.codeload import load_code_exercises
-from touchtype.layouts import LAYOUTS
+from tactile.app import TactileApp
+from tactile.codeload import load_code_exercises
+from tactile.layouts import LAYOUTS
 
 EN_US = LAYOUTS["en_us"]
 
@@ -85,7 +85,7 @@ def test_untypable_chars_stay_when_layout_supports_them(tmp_path: Path):
 async def test_cli_practice_file_boots_into_code_practice(tmp_path: Path):
     code_file = tmp_path / "snippet.py"
     code_file.write_text("x = 1\ny = 2\n", encoding="utf-8")
-    app = TouchTypeApp(progress_path=tmp_path / "p.json", practice_file=code_file)
+    app = TactileApp(progress_path=tmp_path / "p.json", practice_file=code_file)
     async with app.run_test() as pilot:
         await pilot.pause()
         assert app.screen.__class__.__name__ == "PracticeScreen"
@@ -98,7 +98,7 @@ async def test_completing_code_practice_records_no_lesson_progress(tmp_path: Pat
     code_file = tmp_path / "tiny.txt"
     code_file.write_text("fj\n", encoding="utf-8")
     progress_path = tmp_path / "p.json"
-    app = TouchTypeApp(progress_path=progress_path, practice_file=code_file)
+    app = TactileApp(progress_path=progress_path, practice_file=code_file)
     async with app.run_test() as pilot:
         await pilot.pause()
         assert app.screen.__class__.__name__ == "PracticeScreen"
@@ -109,11 +109,11 @@ async def test_completing_code_practice_records_no_lesson_progress(tmp_path: Pat
 
 
 async def test_p_key_on_lesson_map_opens_file_picker(tmp_path: Path):
-    from touchtype.progress import ProgressStore
+    from tactile.progress import ProgressStore
 
     path = tmp_path / "p.json"
     ProgressStore(path).set_active_layout("en_us")
-    app = TouchTypeApp(progress_path=path)
+    app = TactileApp(progress_path=path)
     async with app.run_test() as pilot:
         await pilot.pause()
         assert app.screen.__class__.__name__ == "LessonMapScreen"

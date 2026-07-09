@@ -1,5 +1,5 @@
 [project]
-name = "touchtype"
+name = "tactile"
 version = "0.1.0"
 description = "A Textual-based TUI touch-typing trainer"
 readme = "README.md"
@@ -12,7 +12,7 @@ dependencies = [
 ]
 
 [project.scripts]
-touchtype = "touchtype.__main__:main"
+tactile = "tactile.__main__:main"
 
 [build-system]
 requires = ["uv_build>=0.9.22,<0.10.0"]

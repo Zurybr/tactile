@@ -6,7 +6,7 @@ from pathlib import Path
 
 from textual.widgets import OptionList
 
-from touchtype.app import TouchTypeApp
+from tactile.app import TactileApp
 
 
 def _keys_for(text: str) -> list[str]:
@@ -30,7 +30,7 @@ async def _open_unit_one(pilot) -> None:
 
 
 async def test_type_through_unit_one_earns_stars_and_shows_results(tmp_path: Path):
-    app = TouchTypeApp(progress_path=tmp_path / "p.json")
+    app = TactileApp(progress_path=tmp_path / "p.json")
     async with app.run_test() as pilot:
         await _open_unit_one(pilot)
         assert app.screen.__class__.__name__ == "PracticeScreen"
@@ -46,7 +46,7 @@ async def test_type_through_unit_one_earns_stars_and_shows_results(tmp_path: Pat
 async def test_enter_on_results_returns_to_refreshed_map_with_next_unit_unlocked(
     tmp_path: Path,
 ):
-    app = TouchTypeApp(progress_path=tmp_path / "p.json")
+    app = TactileApp(progress_path=tmp_path / "p.json")
     async with app.run_test() as pilot:
         await _open_unit_one(pilot)
         unit = app.current_unit
@@ -67,7 +67,7 @@ async def test_enter_on_results_returns_to_refreshed_map_with_next_unit_unlocked
 
 
 async def test_wrong_key_does_not_advance_cursor(tmp_path: Path):
-    app = TouchTypeApp(progress_path=tmp_path / "p.json")
+    app = TactileApp(progress_path=tmp_path / "p.json")
     async with app.run_test() as pilot:
         await _open_unit_one(pilot)
         session = app.screen.session
@@ -81,7 +81,7 @@ async def test_wrong_key_does_not_advance_cursor(tmp_path: Path):
 
 
 async def test_escape_returns_to_map_without_recording(tmp_path: Path):
-    app = TouchTypeApp(progress_path=tmp_path / "p.json")
+    app = TactileApp(progress_path=tmp_path / "p.json")
     async with app.run_test() as pilot:
         await _open_unit_one(pilot)
         assert app.screen.__class__.__name__ == "PracticeScreen"

@@ -88,7 +88,7 @@ def add_dead_key_vowels(
         )
 
 
-from touchtype.layouts.en_us import EN_US  # noqa: E402
-from touchtype.layouts.es_la import ES_LA  # noqa: E402
+from tactile.layouts.en_us import EN_US  # noqa: E402
+from tactile.layouts.es_la import ES_LA  # noqa: E402
 
 LAYOUTS: dict[str, Layout] = {"en_us": EN_US, "es_la": ES_LA}

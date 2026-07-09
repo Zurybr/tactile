@@ -1,4 +1,4 @@
-# touchtype
+# tactile
 
 A terminal touch-typing trainer built with [Textual](https://textual.textualize.io/).
 Progressive lessons introduce keys outward from the home row (edclub style),
@@ -24,11 +24,11 @@ uv sync
 ## Run
 
 ```sh
-uv run touchtype            # launch the trainer (lesson map)
-uv run touchtype practice path/to/file.py   # practice typing a code file
+uv run tactile            # launch the trainer (lesson map)
+uv run tactile practice path/to/file.py   # practice typing a code file
 ```
 
-`python -m touchtype` works as well. Inside the app: `enter` opens a unit,
+`python -m tactile` works as well. Inside the app: `enter` opens a unit,
 `escape` leaves practice, `r` retries a unit from the results screen,
 `p` opens the file picker, `l` changes layout, `q` quits.
 
@@ -40,6 +40,6 @@ uv run pytest -q
 
 ## Progress
 
-Progress is stored at `~/.touchtype/progress.json` (schema versioned, written
+Progress is stored at `~/.tactile/progress.json` (schema versioned, written
 atomically). Deleting the file resets all progress; a corrupt file is backed
 up to `progress.json.bak` and the app starts fresh.

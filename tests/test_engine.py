@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from touchtype.engine import TypingSession
+from tactile.engine import TypingSession
 
 
 def make(

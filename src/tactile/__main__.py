@@ -1,4 +1,4 @@
-"""Command-line entry point for touchtype."""
+"""Command-line entry point for tactile."""
 
 from __future__ import annotations
 
@@ -6,11 +6,11 @@ import argparse
 import sys
 from pathlib import Path
 
-from touchtype import __version__
+from tactile import __version__
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(prog="touchtype")
+    parser = argparse.ArgumentParser(prog="tactile")
     parser.add_argument("--version", action="store_true", help="show version and exit")
 
     subparsers = parser.add_subparsers(dest="command")
@@ -25,20 +25,20 @@ def main() -> None:
     args = parser.parse_args()
 
     if args.version:
-        print(f"touchtype {__version__}")
+        print(f"tactile {__version__}")
         return
 
-    from touchtype.app import TouchTypeApp
+    from tactile.app import TactileApp
 
     if args.command == "practice":
         practice_path = Path(args.path)
         if not practice_path.is_file():
-            print(f"touchtype: file not found: {practice_path}", file=sys.stderr)
+            print(f"tactile: file not found: {practice_path}", file=sys.stderr)
             sys.exit(1)
-        TouchTypeApp(practice_file=practice_path).run()
+        TactileApp(practice_file=practice_path).run()
         return
 
-    TouchTypeApp().run()
+    TactileApp().run()
 
 
 if __name__ == "__main__":

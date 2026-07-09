@@ -6,22 +6,22 @@ from pathlib import Path
 
 from textual.app import App
 
-from touchtype.codeload import load_code_exercises
-from touchtype.curriculum import Unit, build_curriculum, load_wordlist
-from touchtype.layouts import LAYOUTS
-from touchtype.progress import ProgressStore
-from touchtype.screens.file_picker import FilePickerScreen
-from touchtype.screens.layout_select import LayoutSelectScreen
-from touchtype.screens.lesson_map import LessonMapScreen
-from touchtype.screens.practice import PracticeScreen
-from touchtype.screens.results import ResultsScreen
+from tactile.codeload import load_code_exercises
+from tactile.curriculum import Unit, build_curriculum, load_wordlist
+from tactile.layouts import LAYOUTS
+from tactile.progress import ProgressStore
+from tactile.screens.file_picker import FilePickerScreen
+from tactile.screens.layout_select import LayoutSelectScreen
+from tactile.screens.lesson_map import LessonMapScreen
+from tactile.screens.practice import PracticeScreen
+from tactile.screens.results import ResultsScreen
 
 
-class TouchTypeApp(App):
-    """touchtype: a TUI touch-typing trainer."""
+class TactileApp(App):
+    """tactile: a TUI touch-typing trainer."""
 
     CSS_PATH = "styles.tcss"
-    TITLE = "touchtype"
+    TITLE = "tactile"
 
     def __init__(
         self, progress_path: Path | None = None, practice_file: Path | None = None
@@ -41,7 +41,7 @@ class TouchTypeApp(App):
 
     def on_mount(self) -> None:
         if self.practice_file is not None:
-            # CLI `touchtype practice <path>`: land straight in code practice
+            # CLI `tactile practice <path>`: land straight in code practice
             # over the active layout (en_us fallback), with the lesson map
             # underneath so escape/results navigation works as usual.
             layout_id = self.store.active_layout or "en_us"

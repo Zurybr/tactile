@@ -10,11 +10,11 @@ from textual.screen import Screen
 from textual.widgets import Footer, Header, OptionList
 from textual.widgets.option_list import Option
 
-from touchtype.widgets import render_stars
+from tactile.widgets import render_stars
 
 if TYPE_CHECKING:
-    from touchtype.curriculum import Unit
-    from touchtype.progress import ProgressStore
+    from tactile.curriculum import Unit
+    from tactile.progress import ProgressStore
 
 
 class LessonMapScreen(Screen):
