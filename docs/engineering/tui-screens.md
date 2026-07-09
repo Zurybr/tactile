@@ -196,3 +196,36 @@ design-system tokens: screens are centred on `$surface`; `OptionList`s and
 the results body get a `round $primary` border; the practice stats line is
 `$text-muted`. There is no per-widget colour hardcoding — theming comes from
 the tokens.
+
+### Centered practice-screen layout
+
+Every practice-screen element — `#practice-title`, `#practice-stats`,
+`#practice-text`, and `#practice-keyboard` — resolves to `text-align: center`
+inside its `90%` container, while the containers themselves stay centred on
+screen via the existing `Screen { align: center middle }`. The results body
+(`#results-body`) was already centred and remains so.
+
+```css
+#practice-title, #practice-stats, #practice-text, #practice-keyboard {
+    text-align: center;
+}
+```
+
+`tests/test_centered_layout.py` asserts each widget's resolved `text_align`
+equals `"center"` through the real Textual CSS cascade, so a CSS revert
+(left-align) fails the test.
+
+#### Ergonomics note (cursor anchor shift)
+
+Centering multi-line practice text shifts the cursor's **anchor column** on
+every line of a multi-line target: a short line centres within the container,
+so the column where the next character lands differs from the line above.
+Touch-typists who practise to a steady **left-rhythm** may find this slightly
+disorienting on multi-line exercises (and on code practice). Single-line
+drills are unaffected because each drill is one line.
+
+This is an accepted trade-off of the centred layout for visual consistency.
+A future iteration **may** add an escape hatch (e.g. a CSS class that
+re-applies `text-align: left` to `#practice-text` only) to restore the
+left-anchored rhythm without un-centring the rest of the screen. That escape
+hatch is **not** in scope for this change.

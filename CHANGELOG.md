@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Centered practice-screen layout** (`styles.tcss`): title, stats, practice
+  text, and keyboard now resolve to `text-align: center` for visual
+  consistency. The results body stays centred as before. Ergonomics note
+  (multi-line cursor anchor shift) and a possible future left-align escape
+  hatch are documented in `docs/engineering/tui-screens.md`.
 - **Contributor conventions** (`AGENTS.md`): mandatory documentation-sync,
   changelog-sync, conventional-commit-with-scope, and pre-push docs-validation
   rules for every change.

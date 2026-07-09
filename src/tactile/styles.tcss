@@ -11,22 +11,26 @@ OptionList {
 
 #practice-title {
     width: 90%;
+    text-align: center;
     text-style: bold;
     padding: 1 0 0 0;
 }
 
 #practice-stats {
     width: 90%;
+    text-align: center;
     color: $text-muted;
 }
 
 #practice-text {
     width: 90%;
+    text-align: center;
     padding: 1 0;
 }
 
 #practice-keyboard {
     width: 90%;
+    text-align: center;
     padding: 1 0;
 }
 
