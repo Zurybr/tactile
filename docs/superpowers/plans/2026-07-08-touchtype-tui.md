@@ -233,9 +233,9 @@ def build_curriculum(layout: Layout, words: list[str]) -> list[Unit]
 - Speedtest: 1 exercise, ~200 chars of words over the full alphabet pool.
 - Every exercise char must satisfy `layout.typable()` — filter or regenerate otherwise. No leading/trailing spaces, no double spaces, no newlines inside lesson exercises.
 
-- [ ] Failing tests first: determinism (two builds are equal); first en_us unit exercises only contain chars from `"fj "`; unit count == len(key_order) + reviews + 1; wpm targets ramp monotonically from 10 to 40; all chars of all exercises typable; review appears after each 5th lesson; es_la word exercises eventually include `ñ` words once ñ is learned (build full curriculum, scan a review unit late in the list).
-- [ ] Red -> implement -> green.
-- [ ] Commit: `feat: add deterministic layout-aware curriculum generator with bundled wordlists`
+- [x] Failing tests first: determinism (two builds are equal); first en_us unit exercises only contain chars from `"fj "`; unit count == len(key_order) + reviews + 1; wpm targets ramp monotonically from 10 to 40; all chars of all exercises typable; review appears after each 5th lesson; es_la word exercises eventually include `ñ` words once ñ is learned (build full curriculum, scan a review unit late in the list).
+- [x] Red -> implement -> green.
+- [x] Commit: `feat: add deterministic layout-aware curriculum generator with bundled wordlists`
 
 ### Task 5: Progress store
 
