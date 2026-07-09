@@ -1,0 +1,53 @@
+# Changelog
+
+All notable changes to **tactile** are documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [0.1.0] - 2026-07-09
+
+The first tagged release: a terminal touch-typing trainer built with Textual.
+
+### Added
+
+- **Core typing engine** (`engine.py`): pure domain logic implementing the
+  edclub-style cursor model (cursor does not advance on a wrong key; every
+  wrong attempt counts against accuracy), live WPM/accuracy, and a 1-5 star
+  rating per exercise (1 complete; 2 acc>=90; 3 acc>=95; 4 acc>=97 and
+  net WPM>=target; 5 acc>=99 and net WPM>=target).
+- **Two keyboard layouts** (`layouts/`): English (US) QWERTY and
+  Español (Latinoamérica). The es_la layout is verified against the Windows
+  KBDLA layout, including the `ñ` home-row key, the `´`/`¨` dead keys
+  producing accented vowels, and AltGr symbols (`AltGr+Q` = `@`).
+- **Deterministic, layout-aware curriculum** (`curriculum.py`): one lesson per
+  key-introduction group (home row outward), a review unit every 5th lesson,
+  and a final speed test. Content is seeded by
+  `(layout, unit_index, exercise_index)` so a given layout always produces the
+  same curriculum. en_us yields 26 units (21 lessons + 4 reviews + 1 speed
+  test); es_la yields 27 units (22 lessons + 4 reviews + 1 speed test).
+- **Bundled wordlists**: 300 common words per language (`en.txt`, `es.txt`),
+  loaded via `importlib.resources`. No network access at build or runtime.
+- **Sequential unlocking**: a unit unlocks when the previous one has >=2
+  stars. Replays are always allowed and can improve stars.
+- **Progress store** (`progress.py`): schema-versioned JSON at
+  `~/.tactile/progress.json` with atomic writes (write `.tmp`, then
+  `os.replace`) and a `.bak` backup on corruption. Keeps best stars/WPM/
+  accuracy per unit and accumulates a per-key error heatmap.
+- **Textual TUI** (`app.py`, `screens/`, `widgets.py`): layout select, lesson
+  map (with lock/star/best-WPM rows), practice (live stats, on-screen
+  keyboard with finger + modifier hints), results (stars, worst keys, retry),
+  and a directory-tree file picker.
+- **Code/text file practice** (`codeload.py`): turn any file into typing
+  exercises. utf-8 first with a latin-1 fallback; tabs expanded to 4 spaces;
+  leading/trailing whitespace stripped; files capped at 2000 lines; untypable
+  characters removed with a notice. Chunked into 10-line exercises. Results
+  are shown but only the key-error heatmap is recorded (never lesson stars).
+- **CLI** (`__main__.py`): `tactile` launches the trainer,
+  `tactile practice <path>` jumps straight into code practice,
+  `tactile --version` prints the version, and `python -m tactile` works too.
+- **Test suite**: 76 tests (pytest + pytest-asyncio) covering the engine,
+  layouts, curriculum, progress store, code loader, and Textual Pilot-driven
+  UI flows. Strict TDD was used throughout.
+
+[0.1.0]: https://keepachangelog.com/en/1.1.0/
