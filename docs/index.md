@@ -1,6 +1,6 @@
 # Documentation
 
-> Navigable map of the project. Open any wiki link: [[file]] or [[file#section]].
+> Navigable map of the project. Open any wiki link: `[[file]]` or `[[file#section]]`.
 
 ## Project
 - [[project/brief|Brief]]

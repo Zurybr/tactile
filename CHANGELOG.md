@@ -5,6 +5,18 @@ All notable changes to **tactile** are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- **Contributor conventions** (`AGENTS.md`): mandatory documentation-sync,
+  changelog-sync, conventional-commit-with-scope, and pre-push docs-validation
+  rules for every change.
+- **Docs validation script** (`scripts/validate_docs.py`): parses Obsidian
+  wikilinks from `docs/index.md` and verifies every link resolves to a file
+  under `docs/`. Run with `uv run python scripts/validate_docs.py` before
+  pushing.
+
 ## [0.1.0] - 2026-07-09
 
 The first tagged release: a terminal touch-typing trainer built with Textual.
