@@ -9,11 +9,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Free lesson navigation** (`progress.py`, `screens/lesson_map.py`): any
+  lesson, review, or speedtest is attemptable in any order — `is_unlocked`
+  is always `True` and no lesson-map row is disabled. Completing a lesson
+  with `>= 2` stars lights up the completion badges of every earlier lesson
+  across all units globally (the completion cascade), shown via a separate
+  `is_completion_unlocked` lock icon.
 - **Centered practice-screen layout** (`styles.tcss`): title, stats, practice
   text, and keyboard now resolve to `text-align: center` for visual
   consistency. The results body stays centred as before. Ergonomics note
   (multi-line cursor anchor shift) and a possible future left-align escape
   hatch are documented in `docs/engineering/tui-screens.md`.
+
+### Changed
+
+- **Progress schema v1 -> v2** (`progress.py`): adds a top-level `settings`
+  object (default `{}`). Legacy v1 files migrate forward losslessly on load
+  (version bumped to 2, `settings` added if absent, all stars / bests /
+  `key_errors` preserved verbatim); the v1 file is copied to
+  `progress.json.bak` before the first v2 write and is never treated as
+  corrupt. The migration is forward-only and idempotent.
+
 - **Contributor conventions** (`AGENTS.md`): mandatory documentation-sync,
   changelog-sync, conventional-commit-with-scope, and pre-push docs-validation
   rules for every change.

@@ -44,19 +44,21 @@ class LessonMapScreen(Screen):
         option_list = self.query_one(OptionList)
         option_list.clear_options()
 
-        first_unlocked = 0
         for index, unit in enumerate(units):
-            unlocked = store.is_unlocked(self.layout_id, index, units)
-            if unlocked:
-                first_unlocked = index
+            # Free navigation: every lesson is attemptable, so no row is ever
+            # disabled. The completion lock icon is a display badge driven by
+            # is_completion_unlocked (derived from >= 2 stars), not a click gate.
+            completion_unlocked = store.is_completion_unlocked(
+                self.layout_id, index, units
+            )
             stars = store.stars_for(self.layout_id, unit.id)
             best_wpm = store.best_wpm_for(self.layout_id, unit.id)
             option_list.add_option(
-                Option(_format_row(unit, stars, best_wpm, unlocked), disabled=not unlocked)
+                Option(_format_row(unit, stars, best_wpm, completion_unlocked), disabled=False)
             )
 
         option_list.focus()
-        option_list.highlighted = first_unlocked
+        option_list.highlighted = 0
 
     def on_option_list_option_selected(self, event: OptionList.OptionSelected) -> None:
         units: list[Unit] = self.app.curriculum_for(self.layout_id)  # type: ignore[attr-defined]
@@ -73,7 +75,7 @@ class LessonMapScreen(Screen):
         self.app.exit()
 
 
-def _format_row(unit: Unit, stars: int, best_wpm: float, unlocked: bool) -> str:
-    lock = " " if unlocked else "\U0001f512"
+def _format_row(unit: Unit, stars: int, best_wpm: float, completion_unlocked: bool) -> str:
+    lock = " " if completion_unlocked else "\U0001f512"
     wpm_str = f"{best_wpm:.0f} wpm" if best_wpm else "--- wpm"
     return f"{lock} {render_stars(stars)}  {unit.title}  ({wpm_str})"
