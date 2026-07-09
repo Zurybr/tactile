@@ -91,6 +91,10 @@ class ProgressStore:
         entry = self._state.get("layouts", {}).get(layout_id, {}).get("lessons", {}).get(unit_id)
         return entry["stars"] if entry else 0
 
+    def best_wpm_for(self, layout_id: str, unit_id: str) -> float:
+        entry = self._state.get("layouts", {}).get(layout_id, {}).get("lessons", {}).get(unit_id)
+        return entry["best_wpm"] if entry else 0.0
+
     def is_unlocked(self, layout_id: str, unit_index: int, units: list[Unit]) -> bool:
         if unit_index == 0:
             return True

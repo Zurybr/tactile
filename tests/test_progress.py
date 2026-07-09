@@ -73,6 +73,18 @@ def test_corrupt_file_is_backed_up_and_store_starts_fresh(tmp_path: Path):
     assert ProgressStore(path).active_layout == "en_us"
 
 
+def test_best_wpm_for_returns_zero_when_unseen_and_best_after_record(tmp_path: Path):
+    store = ProgressStore(tmp_path / "progress.json")
+    assert store.best_wpm_for("en_us", "en_us-01") == 0.0
+
+    store.record("en_us", "en_us-01", stars=3, wpm=28.5, accuracy=95.0, key_errors={})
+    assert store.best_wpm_for("en_us", "en_us-01") == 28.5
+
+    # A later, worse WPM must not overwrite the best.
+    store.record("en_us", "en_us-01", stars=3, wpm=20.0, accuracy=95.0, key_errors={})
+    assert store.best_wpm_for("en_us", "en_us-01") == 28.5
+
+
 def test_atomic_write_does_not_leave_tmp_file_behind(tmp_path: Path):
     path = tmp_path / "progress.json"
     store = ProgressStore(path)

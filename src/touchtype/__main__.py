@@ -30,7 +30,9 @@ def main() -> None:
         print("touchtype: TUI launch comes in a later task")
         return
 
-    print("touchtype: TUI launch comes in a later task")
+    from touchtype.app import TouchTypeApp
+
+    TouchTypeApp().run()
 
 
 if __name__ == "__main__":

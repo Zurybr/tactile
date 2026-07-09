@@ -1,0 +1,10 @@
+Screen {
+    background: $surface;
+    align: center middle;
+}
+
+OptionList {
+    width: 90%;
+    height: 90%;
+    border: round $primary;
+}

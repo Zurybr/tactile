@@ -301,8 +301,10 @@ async def test_first_run_shows_layout_select_then_map(tmp_path):
 ```
 
 Plus: second run (store with active_layout preset) goes straight to the map; unit 1 is enabled, unit 2 disabled with a fresh store.
-- [ ] Red -> implement -> green (`uv run pytest -q`).
-- [ ] Commit: `feat: add Textual app shell with layout select and lesson map screens`
+- [x] Red -> implement -> green (`uv run pytest -q`).
+- [x] Commit: `feat: add Textual app shell with layout select and lesson map screens`
+
+**Deviation**: the lesson map's "best WPM" column needed a getter the Task 5 interface didn't declare. Added `ProgressStore.best_wpm_for(layout_id, unit_id) -> float` (mirrors `stars_for`, same strict-TDD red/green cycle, own test in `test_progress.py`) rather than reaching into `ProgressStore` internals from the UI layer.
 
 ### Task 7: Practice + results screens (the core loop)
 
