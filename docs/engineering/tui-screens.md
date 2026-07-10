@@ -98,7 +98,7 @@ Runs a unit's exercises one at a time through a `TypingSession`. Composes:
 ```
 Static#practice-title     "Unit title - exercise i/n"
 Static#practice-stats     "WPM  32.5   ACC  97.2%"   (refreshed every 0.5s)
-Static#practice-text      target with green/reverse/dim spans
+Static#practice-text      target with green/red/reverse/dim spans
 KeyboardWidget            on-screen keyboard + finger/modifier hint
 Footer
 ```
@@ -109,8 +109,11 @@ Footer
   `on_backspace()`, and printable chars → `on_key(character)`. Each handled
   key calls `event.stop()` so bindings do not fire mid-typing; `escape` is
   let through to its binding.
-- The cursor char is rendered reversed; it turns `reverse red` right after a
-  wrong attempt. A `\n` cursor renders as `⏎`.
+- Typed characters are colored per-position: **green** for correct keys,
+  **red** for uncorrected errors (positions still in `error_positions`).
+  The cursor char is rendered reversed; it turns `reverse red` right after a
+  wrong attempt. A `\n` cursor renders as `⏎`. Remaining (untyped) characters
+  are dim.
 - On exercise completion: if more exercises remain, advance within the unit
   (per-exercise stats reset). After the last exercise: aggregate the unit
   (mean accuracy, mean WPM, **min** stars), record to the store, and push

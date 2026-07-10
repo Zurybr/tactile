@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Color-coded practice text** (`practice.py`): typed characters now render
+  green (correct) or red (uncorrected error) per-position, instead of a
+  uniform green. Extracted `_build_text()` for testability.
+- **Project icon** (`docs/assets/tactile-icon.svg`): terminal-themed SVG icon
+  displayed in the README header.
 - **Self-update subcommand** (`__main__.py`): `tactile update` reinstalls
   tactile from the latest `main` branch on GitHub
   (`git+https://github.com/Zurybr/tactile`). It prefers
