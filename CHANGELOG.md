@@ -21,6 +21,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `uv` first if it is missing, then runs
   `uv tool install git+https://github.com/Zurybr/tactile`. Documented in
   `README.md`.
+- **GitHub Actions CI** (`.github/workflows/ci.yml`): runs the test suite
+  (`uv run python -m pytest -q`), docs validation
+  (`scripts/validate_docs.py`), and a build check (`uv build`) on
+  `ubuntu-latest`, `windows-latest`, and `macos-latest` for Python 3.12 on
+  every push and pull request to `main`.
 
 - **Forgiving error model** (`engine.py`): a wrong key now ADVANCES the
   cursor (the learner types past mistakes), backspace ERASES the recorded
