@@ -373,6 +373,8 @@ def _fluency_plan(layout: Layout, words: list[str]) -> list[_FluencyEntry]:
     plan.extend(_common_words_plan(layout, words))
     plan.extend(_sentences_plan(layout))
     plan.extend(_paragraphs_plan(layout))
+    plan.extend(_numbers_plan(layout))
+    plan.extend(_symbols_plan(layout))
     return plan
 
 
@@ -1024,3 +1026,57 @@ def _make_paragraph_builder(pool: list[str]) -> _FluencyBuilder:
         return tuple(Exercise(text=_finalize(t, layout, multiline=True)) for t in texts)
 
     return builder
+
+
+# ---- 5. Numbers ------------------------------------------------------------
+
+_DIGITS = list("0123456789")
+_DATES = [
+    "2024", "1999", "2000", "2020", "1776", "2008", "1995", "2025",
+    "12/05/2023", "01/01/2000", "15/08/1947", "29/02/2024",
+]
+_DECIMALS = [
+    "3.14", "99.9", "1000000", "42.5", "2.718", "1000", "256",
+    "1.5", "9.81", "100000", "0.5", "3.14159",
+]
+
+
+def _make_drill_builder(
+    pool: list[str], exercise_count: int, target_len: int
+) -> _FluencyBuilder:
+    def builder(layout: Layout, layout_id: str, unit_index: int) -> tuple[Exercise, ...]:
+        return _drill_repeats(layout, layout_id, unit_index, pool, exercise_count, target_len)
+
+    return builder
+
+
+def _numbers_plan(layout: Layout) -> list[_FluencyEntry]:
+    del layout  # digits, dates, decimals are layout-independent
+    return [
+        ("number", "Numbers: digits", _make_drill_builder(_DIGITS, 4, 35)),
+        ("number", "Numbers: dates & years", _make_drill_builder(_DATES, 4, 40)),
+        ("number", "Numbers: decimals & large", _make_drill_builder(_DECIMALS, 4, 40)),
+    ]
+
+
+# ---- 6. Symbols ------------------------------------------------------------
+
+# Candidate symbol groups. Filtered per layout so only typable symbols remain
+# (es_la, for example, cannot type a backslash).
+_SYMBOL_BASIC = "!@#$%^&*"
+_SYMBOL_BRACKETS = "()[]{}<>"
+_SYMBOL_OPS = "+-=/\\|;:'\",.?"
+
+
+def _symbols_plan(layout: Layout) -> list[_FluencyEntry]:
+    def typable_chars(s: str) -> list[str]:
+        return [c for c in s if layout.typable(c)] or [s[0]]
+
+    basic = typable_chars(_SYMBOL_BASIC)
+    brackets = typable_chars(_SYMBOL_BRACKETS)
+    ops = typable_chars(_SYMBOL_OPS)
+    return [
+        ("symbol", "Symbols: basic", _make_drill_builder(basic, 4, 30)),
+        ("symbol", "Symbols: brackets", _make_drill_builder(brackets, 4, 30)),
+        ("symbol", "Symbols: operators", _make_drill_builder(ops, 4, 30)),
+    ]
