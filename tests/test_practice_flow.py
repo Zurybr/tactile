@@ -66,7 +66,7 @@ async def test_enter_on_results_returns_to_refreshed_map_with_next_unit_unlocked
         assert option_list.get_option_at_index(1).disabled is False
 
 
-async def test_wrong_key_does_not_advance_cursor(tmp_path: Path):
+async def test_wrong_key_advances_and_records_error(tmp_path: Path):
     app = TactileApp(progress_path=tmp_path / "p.json")
     async with app.run_test() as pilot:
         await _open_unit_one(pilot)
@@ -76,8 +76,47 @@ async def test_wrong_key_does_not_advance_cursor(tmp_path: Path):
 
         await pilot.press("q")  # never part of unit 1's pool
         await pilot.pause()
-        assert session.position == 0
-        assert session.expected == expected_before
+        # Forgiving model: a wrong key ADVANCES the cursor and records the
+        # error (the learner types past mistakes).
+        assert session.position == 1
+        assert 0 in session.error_positions
+        assert session.expected != expected_before
+
+
+async def test_error_to_accuracy_to_stars_to_record_to_unlock_cascade(tmp_path: Path):
+    """Full cascade pinned against the new forgiving model: one mid error per
+    exercise -> accuracy reflects credited chars -> stars earned -> recorded
+    -> completion unlock reflects ``is_unlocked`` (always True after slice 2).
+    """
+    app = TactileApp(progress_path=tmp_path / "p.json")
+    async with app.run_test() as pilot:
+        await _open_unit_one(pilot)
+        unit = app.current_unit
+        assert unit is not None
+
+        for exercise in unit.exercises:
+            keys = _keys_for(exercise.text)
+            # Drill text is long enough to safely split mid-stream.
+            mid = max(1, len(keys) // 2)
+            # Type the first half perfectly.
+            await pilot.press(*keys[:mid])
+            # Inject one mid error: wrong key advances; backspace erases it;
+            # re-typing from `mid` makes the mid position "corrected" (0.5).
+            await pilot.press("q")  # 'q' is never in unit 1's f/j/space pool
+            await pilot.pause()
+            await pilot.press("backspace")
+            await pilot.pause()
+            # Finish: re-type mid + the rest (all first-try except `mid`).
+            await pilot.press(*keys[mid:])
+            await pilot.pause()
+
+        assert app.screen.__class__.__name__ == "ResultsScreen"
+        # New formula: one corrected position per exercise -> accuracy < 100%
+        # but still high enough to earn at least 1 star.
+        assert app.store.stars_for("en_us", unit.id) >= 1
+        # Free navigation (slice 2): any lesson is attemptable.
+        units = app.curriculum_for("en_us")
+        assert app.store.is_unlocked("en_us", 1, units) is True
 
 
 async def test_escape_returns_to_map_without_recording(tmp_path: Path):
