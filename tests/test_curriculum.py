@@ -366,6 +366,46 @@ def test_code_exercises_preserve_newlines_and_indentation():
                 assert layout.typable(c), (unit.id, c)
 
 
+@pytest.mark.parametrize("layout_id", ["en_us", "es_la"])
+def test_burst_fluency_units_present(layout_id):
+    layout = LAYOUTS[layout_id]
+    units = build_curriculum(layout, _SAMPLE_WORDS)
+    bursts = [u for u in _fluency(units) if u.kind == "burst"]
+    assert len(bursts) >= 2, layout_id
+
+
+@pytest.mark.parametrize("layout_id", ["en_us", "es_la"])
+def test_burst_exercises_are_short_and_single_line(layout_id):
+    layout = LAYOUTS[layout_id]
+    units = build_curriculum(layout, _SAMPLE_WORDS)
+    for unit in [u for u in _fluency(units) if u.kind == "burst"]:
+        assert 5 <= len(unit.exercises) <= 8, unit.id
+        for ex in unit.exercises:
+            assert "\n" not in ex.text
+            assert len(ex.text) <= 60, (unit.id, ex.text)
+            for c in ex.text:
+                assert layout.typable(c), (unit.id, c)
+
+
+# ---------------------------------------------------------------------------
+# Fluency totals
+# ---------------------------------------------------------------------------
+
+
+def test_fluency_track_totals_meet_target():
+    for layout_id in ("en_us", "es_la"):
+        layout = LAYOUTS[layout_id]
+        units = build_curriculum(layout, _SAMPLE_WORDS)
+        fluency = _fluency(units)
+        # en_us: 37 fluency units (incl. code); es_la: 33 (no code).
+        expected = 37 if layout_id == "en_us" else 33
+        assert len(fluency) == expected, (layout_id, len(fluency))
+        # every fluency unit has at least 2 exercises
+        for unit in fluency:
+            assert len(unit.exercises) >= 2, (unit.id, len(unit.exercises))
+
+
+
 
 
 

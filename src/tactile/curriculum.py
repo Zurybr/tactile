@@ -376,6 +376,7 @@ def _fluency_plan(layout: Layout, words: list[str]) -> list[_FluencyEntry]:
     plan.extend(_numbers_plan(layout))
     plan.extend(_symbols_plan(layout))
     plan.extend(_code_plan(layout))
+    plan.extend(_bursts_plan(layout, words))
     return plan
 
 
@@ -1145,6 +1146,39 @@ def _make_code_builder(pool: list[str]) -> _FluencyBuilder:
         return tuple(
             Exercise(text=_finalize(t, layout, multiline=True, keep_indent=True))
             for t in picks
+        )
+
+    return builder
+
+
+# ---- 8. Speed bursts -------------------------------------------------------
+
+_BURST_EXERCISE_COUNT = 6
+_BURST_TARGET_LEN = 45
+
+_BURST_PHRASES_EN = [
+    "of the", "in the", "to be", "it is", "is a", "on the",
+    "for the", "with a", "as a", "that is", "there is", "can be",
+]
+_BURST_PHRASES_ES = [
+    "de la", "el que", "en el", "es un", "por la", "con el",
+    "para el", "una vez", "ya que", "cada vez", "sin fin", "al fin",
+]
+
+
+def _bursts_plan(layout: Layout, words: list[str]) -> list[_FluencyEntry]:
+    base = _COMMON_ES if layout.id == "es_la" else _COMMON_EN
+    phrases = _BURST_PHRASES_ES if layout.id == "es_la" else _BURST_PHRASES_EN
+    return [
+        ("burst", "Speed bursts: words", _make_sample_builder(base)),
+        ("burst", "Speed bursts: phrases", _make_sample_builder(phrases)),
+    ]
+
+
+def _make_sample_builder(pool: list[str]) -> _FluencyBuilder:
+    def builder(layout: Layout, layout_id: str, unit_index: int) -> tuple[Exercise, ...]:
+        return _sample_exercises(
+            layout, layout_id, unit_index, pool, _BURST_EXERCISE_COUNT, _BURST_TARGET_LEN
         )
 
     return builder
