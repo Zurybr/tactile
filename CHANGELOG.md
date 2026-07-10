@@ -58,6 +58,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Installation method** (`README.md`): end users now install tactile via
+  one-line scripts (`install.ps1` / `install.sh`) or
+  `uv tool install git+https://github.com/Zurybr/tactile` from GitHub,
+  instead of cloning and running `uv sync`. The previous `uv sync` workflow is
+  retained as "Development setup" for contributors.
 - **Accuracy + net WPM formulas** (`engine.py`): accuracy now weights
   positions (first-try 1.0, corrected 0.5, uncorrected 0.0) instead of
   counting keystrokes; net WPM uses credited chars instead of `position`.
