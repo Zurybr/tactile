@@ -258,3 +258,27 @@ def test_common_words_exercises_are_single_line_typable_words(layout_id):
                 assert layout.typable(c), (unit.id, c)
 
 
+@pytest.mark.parametrize("layout_id", ["en_us", "es_la"])
+def test_sentence_fluency_units_present(layout_id):
+    layout = LAYOUTS[layout_id]
+    units = build_curriculum(layout, _SAMPLE_WORDS)
+    sentences = [u for u in _fluency(units) if u.kind == "sentence"]
+    assert len(sentences) >= 8, layout_id
+
+
+@pytest.mark.parametrize("layout_id", ["en_us", "es_la"])
+def test_sentence_exercises_are_prose_single_line(layout_id):
+    layout = LAYOUTS[layout_id]
+    units = build_curriculum(layout, _SAMPLE_WORDS)
+    for unit in [u for u in _fluency(units) if u.kind == "sentence"]:
+        assert 3 <= len(unit.exercises) <= 5, unit.id
+        for ex in unit.exercises:
+            assert "\n" not in ex.text
+            assert ex.text == ex.text.strip()
+            # prose ends with sentence punctuation
+            assert ex.text[-1] in ".!?¡", (unit.id, ex.text)
+            for c in ex.text:
+                assert layout.typable(c), (unit.id, c)
+
+
+
