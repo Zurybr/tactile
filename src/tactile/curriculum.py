@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import importlib.resources
 import random
+from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Literal
 
@@ -26,13 +27,30 @@ _LESSON_DRILL_TARGET_LEN = 60
 _LESSON_WORDS_TARGET_LEN = 60
 _LESSON_STREAM_TARGET_LEN = 100
 _LONG_STREAM_LETTER_THRESHOLD = 12
-_WPM_TARGET_MIN = 10.0
-_WPM_TARGET_MAX = 40.0
+
+# Two-segment WPM ramp: the key-introduction spine climbs 10 -> 40 (the
+# speedtest is the last spine unit), then the fluency track continues
+# 40 -> 65. The overall ramp is monotonic non-decreasing.
+_WPM_SPINE_MIN = 10.0
+_WPM_SPINE_MAX = 40.0
+_WPM_FLUENCY_MIN = 40.0
+_WPM_FLUENCY_MAX = 65.0
+
+# Fluency exercise length bounds (docs/engineering/curriculum.md).
+_FLUENCY_MIN_LEN = 20
+_FLUENCY_MAX_LEN = 250
 
 
 def _rng(layout_id: str, unit_index: int, exercise_index: int) -> random.Random:
     """The single source of the documented seed format for all curriculum randomness."""
-    return random.Random(f"{layout_id}:{unit_index}:{exercise_index}")
+    return _seeded_rng(layout_id, unit_index, exercise_index)
+
+
+def _seeded_rng(seed_tag: str, unit_index: int, exercise_index: int) -> random.Random:
+    """Seeded RNG parametrized by an arbitrary tag (spine uses layout id;
+    the fluency track uses ``"{layout_id}:fluency"`` so its content is
+    independent of how many spine units precede it)."""
+    return random.Random(f"{seed_tag}:{unit_index}:{exercise_index}")
 
 
 @dataclass(frozen=True)
@@ -40,14 +58,24 @@ class Exercise:
     text: str
 
 
+# A fluency unit reuses one of these kinds. The spine keeps its three legacy
+# kinds ("lesson", "review", "speedtest"); every fluency unit sets
+# ``track="fluency"`` so UI/ramp logic can branch cleanly.
+_FluencyKind = Literal[
+    "ngram", "common_words", "sentence", "paragraph",
+    "number", "symbol", "code", "burst",
+]
+
+
 @dataclass(frozen=True)
 class Unit:
     id: str
     title: str
-    kind: Literal["lesson", "review", "speedtest"]
+    kind: Literal["lesson", "review", "speedtest"] | _FluencyKind
     new_chars: str
     wpm_target: float
     exercises: tuple[Exercise, ...]
+    track: Literal["spine", "fluency"] = "spine"
 
 
 def load_wordlist(layout_id: str) -> list[str]:
@@ -59,7 +87,13 @@ def load_wordlist(layout_id: str) -> list[str]:
 
 def build_curriculum(layout: Layout, words: list[str]) -> list[Unit]:
     typable_words = [w for w in words if w and all(layout.typable(c) for c in w)]
+    spine_units = _build_spine(layout, typable_words)
+    fluency_units = build_fluency_track(layout, typable_words, spine_len=len(spine_units))
+    return spine_units + fluency_units
 
+
+def _build_spine(layout: Layout, typable_words: list[str]) -> list[Unit]:
+    """The key-introduction spine: lessons, reviews, and the final speedtest."""
     # (kind, title, new_chars, pool, lesson_number_so_far)
     specs: list[tuple[str, str, str, frozenset[str], int]] = []
     pool: set[str] = set()
@@ -95,18 +129,19 @@ def build_curriculum(layout: Layout, words: list[str]) -> list[Unit]:
                 title=title,
                 kind=kind,  # type: ignore[arg-type]
                 new_chars=new_chars,
-                wpm_target=_wpm_target(index, total),
+                wpm_target=_wpm_ramp(index, total, _WPM_SPINE_MIN, _WPM_SPINE_MAX),
                 exercises=exercises,
+                track="spine",
             )
         )
     return units
 
 
-def _wpm_target(index: int, total: int) -> float:
+def _wpm_ramp(index: int, total: int, lo: float, hi: float) -> float:
+    """Linear ramp from ``lo`` to ``hi`` across ``total`` positions, 1-decimal."""
     if total <= 1:
-        return _WPM_TARGET_MIN
-    ramp = (_WPM_TARGET_MAX - _WPM_TARGET_MIN) * index / (total - 1)
-    return round(_WPM_TARGET_MIN + ramp, 1)
+        return lo
+    return round(lo + (hi - lo) * index / (total - 1), 1)
 
 
 def _build_lesson_exercises(
@@ -256,6 +291,202 @@ def _interleaved_tokens(
     return " ".join(tokens)
 
 
-def _finalize(text: str, layout: Layout) -> str:
-    filtered = "".join(c for c in text if c == " " or layout.typable(c) and c != "\n")
+def _finalize(
+    text: str, layout: Layout, *, multiline: bool = False, keep_indent: bool = False
+) -> str:
+    """Strip untypable chars and normalize whitespace.
+
+    - Default (single-line, used by lessons/reviews/ngrams/words/...): drop
+      newlines, collapse whitespace, no leading/trailing spaces.
+    - ``multiline=True`` (paragraphs): keep ``\\n`` line breaks, collapse runs
+      of spaces within each line, strip each line.
+    - ``multiline=True, keep_indent=True`` (code): keep ``\\n`` AND leading
+      indentation, only rstrip each line (so Python ``    `` indents survive).
+    """
+    if multiline:
+        lines = []
+        for raw_line in text.split("\n"):
+            filtered = "".join(c for c in raw_line if c == " " or layout.typable(c))
+            lines.append(filtered.rstrip() if keep_indent else " ".join(filtered.split()))
+        return "\n".join(lines).strip("\n")
+    filtered = "".join(c for c in text if c == " " or (layout.typable(c) and c != "\n"))
     return " ".join(filtered.split())
+
+
+# ===========================================================================
+# Fluency track (appended after the spine speedtest)
+# ===========================================================================
+#
+# The fluency track is a second collection of units that drills real-world
+# typing patterns: n-grams, common words, sentences, paragraphs, numbers,
+# symbols, code, and speed bursts. It is appended AFTER the existing speedtest
+# so the key-introduction spine and its tests are untouched. Its WPM ramp runs
+# 40 -> 65 (the spine already covered 10 -> 40), keeping the overall ramp
+# monotonic.
+#
+# Each unit is produced by a small builder closure that turns
+# ``(layout, layout_id, unit_index)`` into a tuple of exercises. All randomness
+# flows through the seeded ``_rng`` so the whole track is deterministic and
+# rebuilds byte-identically.
+
+# A plan entry: (kind, title, builder). The builder receives the layout, the
+# layout id, and the unit's global index (spine_len + fluency position) so its
+# ``_rng`` seeds stay unique and stable across rebuilds.
+_FluencyBuilder = Callable[[Layout, str, int], tuple[Exercise, ...]]
+_FluencyEntry = tuple[_FluencyKind, str, _FluencyBuilder]
+
+
+def build_fluency_track(
+    layout: Layout, words: list[str], spine_len: int
+) -> list[Unit]:
+    """Build the post-speedtest fluency track for a layout.
+
+    ``spine_len`` is accepted to match the documented signature; the fluency
+    content itself is independent of it because fluency units seed their RNG
+    under the ``"{layout_id}:fluency"`` namespace rather than offsetting from
+    the spine length.
+    """
+    del spine_len  # content is spine-independent by design
+    plan = _fluency_plan(layout, words)
+    total = len(plan)
+    units: list[Unit] = []
+    for i, (kind, title, builder) in enumerate(plan):
+        # ``i`` is the fluency position; builders namespace the seed themselves.
+        units.append(
+            Unit(
+                id=f"{layout.id}-fluency-{i + 1:02d}",
+                title=title,
+                kind=kind,
+                new_chars="",
+                wpm_target=_wpm_ramp(i, total, _WPM_FLUENCY_MIN, _WPM_FLUENCY_MAX),
+                exercises=builder(layout, layout.id, i),
+                track="fluency",
+            )
+        )
+    return units
+
+
+def _fluency_plan(layout: Layout, words: list[str]) -> list[_FluencyEntry]:
+    """Ordered fluency plan for a layout. Append new types here in pedagogical order."""
+    plan: list[_FluencyEntry] = []
+    plan.extend(_ngram_plan(layout))
+    return plan
+
+
+# ---- shared fluency helpers ------------------------------------------------
+
+# Fluency RNGs live in their own seed namespace so the track's content does
+# not depend on how many spine units precede it.
+_FLUENCY_SEED_TAG = "{layout_id}:fluency"
+
+
+def _drill_repeats(
+    layout: Layout,
+    layout_id: str,
+    unit_index: int,
+    tokens_source: list[str],
+    exercise_count: int,
+    target_len: int,
+) -> tuple[Exercise, ...]:
+    """Drill a pool of tokens by repeating them (space-separated) to ``target_len``."""
+    seed_tag = _FLUENCY_SEED_TAG.format(layout_id=layout_id)
+    texts: list[str] = []
+    pool = tokens_source or [" "]
+    for ex_i in range(exercise_count):
+        rng = _seeded_rng(seed_tag, unit_index, ex_i)
+        tokens: list[str] = []
+        length = 0
+        while length < target_len:
+            token = rng.choice(pool)
+            tokens.append(token)
+            length += len(token) + 1
+        texts.append(" ".join(tokens))
+    return tuple(Exercise(text=_finalize(t, layout)) for t in texts)
+
+
+def _sample_exercises(
+    layout: Layout,
+    layout_id: str,
+    unit_index: int,
+    pool: list[str],
+    exercise_count: int,
+    target_len: int,
+    *,
+    multiline: bool = False,
+    keep_indent: bool = False,
+    joiner: Callable[[list[str]], str] = lambda toks: " ".join(toks),
+) -> tuple[Exercise, ...]:
+    """Build ``exercise_count`` exercises by sampling ``target_len`` chars of tokens."""
+    seed_tag = _FLUENCY_SEED_TAG.format(layout_id=layout_id)
+    texts: list[str] = []
+    src = pool or [" "]
+    for ex_i in range(exercise_count):
+        rng = _seeded_rng(seed_tag, unit_index, ex_i)
+        tokens: list[str] = []
+        length = 0
+        while length < target_len:
+            token = rng.choice(src)
+            tokens.append(token)
+            length += len(token) + 1
+        texts.append(joiner(tokens))
+    return tuple(
+        Exercise(text=_finalize(t, layout, multiline=multiline, keep_indent=keep_indent))
+        for t in texts
+    )
+
+
+# ---- 1. Bigrams / Trigrams -------------------------------------------------
+
+_NGRAM_EXERCISE_COUNT = 3
+_NGRAM_TARGET_LEN = 40
+
+_BIGRAMS_EN = ["th", "he", "in", "er", "an", "re", "nd", "at", "on", "nt", "ha", "es", "st"]
+_TRIGRAMS_EN = ["the", "ing", "and", "ion", "tio", "ent", "ati", "for", "her"]
+_BIGRAMS_ES = ["de", "qu", "el", "la", "en", "er", "ar", "re", "on", "al"]
+_TRIGRAMS_ES = ["que", "est", "ado", "ara", "ión", "ent", "ier", "nte"]
+
+
+def _split_half(items: list[str]) -> tuple[list[str], list[str]]:
+    """Split a list into two non-empty halves (second falls back to first)."""
+    mid = max(1, len(items) // 2)
+    second = items[mid:] or items[:mid]
+    return items[:mid], second
+
+
+def _ngram_plan(layout: Layout) -> list[_FluencyEntry]:
+    if layout.id == "es_la":
+        bigrams, trigrams = _BIGRAMS_ES, _TRIGRAMS_ES
+    else:
+        bigrams, trigrams = _BIGRAMS_EN, _TRIGRAMS_EN
+    bi_a, bi_b = _split_half(bigrams)
+    tri_a, tri_b = _split_half(trigrams)
+    groups = [
+        ("Bigrams I", bi_a),
+        ("Bigrams II", bi_b),
+        ("Bigrams review", bigrams),
+        ("Trigrams I", tri_a),
+        ("Trigrams II", tri_b),
+        ("Trigrams review", trigrams),
+    ]
+    return [
+        (
+            "ngram",
+            title,
+            _make_ngram_builder(grams),
+        )
+        for title, grams in groups
+    ]
+
+
+def _make_ngram_builder(grams: list[str]) -> _FluencyBuilder:
+    def builder(layout: Layout, layout_id: str, unit_index: int) -> tuple[Exercise, ...]:
+        return _drill_repeats(
+            layout,
+            layout_id,
+            unit_index,
+            grams,
+            _NGRAM_EXERCISE_COUNT,
+            _NGRAM_TARGET_LEN,
+        )
+
+    return builder
