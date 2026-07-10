@@ -372,6 +372,7 @@ def _fluency_plan(layout: Layout, words: list[str]) -> list[_FluencyEntry]:
     plan.extend(_ngram_plan(layout))
     plan.extend(_common_words_plan(layout, words))
     plan.extend(_sentences_plan(layout))
+    plan.extend(_paragraphs_plan(layout))
     return plan
 
 
@@ -763,5 +764,263 @@ def _make_sentence_builder(pool: list[str]) -> _FluencyBuilder:
                 length += len(sentence) + 1
             texts.append(" ".join(chosen))
         return tuple(Exercise(text=_finalize(t, layout)) for t in texts)
+
+    return builder
+
+
+# ---- 4. Paragraphs ---------------------------------------------------------
+
+_PARAGRAPH_EXERCISE_COUNT = 3
+_PARAGRAPH_THEMES = ["Typing", "Nature", "Technology", "Daily life", "Growth"]
+
+# Five themed units, each with five original multi-line paragraphs
+# (~3-4 lines, 150-250 chars). No copyrighted text.
+_PARAGRAPH_POOLS_EN: list[list[str]] = [
+    [  # typing
+        "Learning to type well pays you back for your whole life.\n"
+        "Every keystroke saved is a small moment returned to you.\n"
+        "Start on the home row, let your fingers learn the keys,\n"
+        "and soon you will type without looking down at all.",
+        "Good posture makes typing easier on your hands and back.\n"
+        "Keep your wrists flat and your elbows close to your sides,\n"
+        "and your eyes level with the top edge of the screen.\n"
+        "Small habits now prevent strain in the years ahead.",
+        "Accuracy comes first, and speed follows close behind it.\n"
+        "Type each letter with care rather than rushing ahead.\n"
+        "When your fingers know the path, they move on their own,\n"
+        "and the words appear on the screen almost by magic.",
+        "A steady rhythm beats short bursts of frantic typing.\n"
+        "Find a calm pace you can hold for many quiet minutes.\n"
+        "The keyboard becomes a bridge straight to your thoughts,\n"
+        "and ideas flow out as fast as your mind can form them.",
+        "Mistakes are part of practice, not a sign of failure.\n"
+        "Notice the keys that trip you up and drill them more.\n"
+        "Each small session adds a little strength to your hands,\n"
+        "and the skill quietly turns into a lifelong habit.",
+    ],
+    [  # nature
+        "The forest wakes slowly in the cool morning air.\n"
+        "Mist hangs between the trunks and fades in the light.\n"
+        "A single bird calls, and another answers from afar.\n"
+        "The day begins its quiet work of growth and renewal.",
+        "Rain fills the river and pushes it over its banks.\n"
+        "Water carries leaves and small branches to the sea.\n"
+        "Nothing is wasted in the long loop of the seasons.\n"
+        "Each drop finds its way back to the wide ocean.",
+        "High on the ridge the wind never seems to rest.\n"
+        "It shapes the short trees into low bending forms.\n"
+        "Below, the valley sleeps under a soft blanket of fog.\n"
+        "The mountain keeps its silence through the long years.",
+        "The desert blooms for a few bright weeks each year.\n"
+        "Seeds that waited in the dry earth open at once.\n"
+        "Color spills across the sand and then fades away.\n"
+        "Life here is brief, fierce, and full of quiet purpose.",
+        "Tides pull the water back to reveal a strip of sand.\n"
+        "Small crabs hurry across the wet and shining ground.\n"
+        "Shells gather where the waves finally come to a stop.\n"
+        "The shore breathes in and out with the pull of the moon.",
+    ],
+    [  # technology
+        "A computer is only as useful as the person who guides it.\n"
+        "Learn the basic ideas before you chase the newest tools.\n"
+        "Clear thinking turns a blank screen into a working program,\n"
+        "and patience turns rough code into something you trust.",
+        "Back up your work before you change anything at all.\n"
+        "A second copy has saved more projects than any clever trick.\n"
+        "Keep notes on what you tried and what you learned from it.\n"
+        "Good habits today protect the work of many quiet hours.",
+        "The best programs are often the simplest ones to read.\n"
+        "Choose clear names and split big tasks into smaller steps.\n"
+        "Test each piece before you join it to the very next one.\n"
+        "Simple code is easier to fix, to change, and to share.",
+        "Networks carry our words around the world in a moment.\n"
+        "A message leaves your screen and reaches a distant friend.\n"
+        "Behind that simple act sit layers of careful design,\n"
+        "built by many people over many patient years of work.",
+        "Automation takes a dull task and hands it to a machine.\n"
+        "What once took hours can finish in a few short seconds.\n"
+        "The hard part is naming the steps with real precision,\n"
+        "for the machine follows your words as you wrote them.",
+    ],
+    [  # daily life / travel
+        "The train rocks gently as the fields roll slowly past.\n"
+        "A hot drink warms your hands against the morning chill.\n"
+        "There is time to read, to think, or simply watch the view.\n"
+        "Travel turns ordinary hours into a quiet little gift.",
+        "Markets open early with piles of fresh and bright fruit.\n"
+        "Vendors call out their prices in a friendly rising song.\n"
+        "The smell of warm bread drifts out from a corner shop.\n"
+        "A slow walk through the stalls is its own kind of joy.",
+        "Evenings at home have a simple and restful kind of charm.\n"
+        "Dinner simmers on the stove while the table is being set.\n"
+        "The day's long list of tasks finally comes to a close.\n"
+        "There is real comfort in these quiet and familiar hours.",
+        "A long walk clears the dust that gathers in the mind.\n"
+        "The same streets look different when you slow your pace.\n"
+        "You notice small doors, old signs, and hidden gardens.\n"
+        "The city shares its secrets with those who stop to look.",
+        "Packing a bag is the first small step of any real journey.\n"
+        "You choose what matters and leave the rest far behind you.\n"
+        "With less to carry, your hands and your mind feel lighter.\n"
+        "Soon a new place will greet you with its own clear light.",
+    ],
+    [  # growth / habits
+        "A new habit starts small and grows with daily practice.\n"
+        "Five minutes today beats one hour done once a month.\n"
+        "Show up at the same time and the habit takes root in you.\n"
+        "Soon the effort fades and the action simply feels natural.",
+        "Reading a little each day quietly reshapes how you think.\n"
+        "Books carry the distilled work of many thoughtful lives.\n"
+        "A few pages in the morning can steady your whole day.\n"
+        "Ideas you meet on the page return to help you later on.",
+        "Writing things down frees your mind from holding them.\n"
+        "A short list turns a vague worry into a clear set of steps.\n"
+        "Notes capture thoughts before they slip away from you.\n"
+        "Later you can review, refine, and act on what you wrote.",
+        "Rest is not the opposite of work but a quiet part of it.\n"
+        "Tired hands make more mistakes and far slower decisions.\n"
+        "A short break returns your focus and your steady patience.\n"
+        "Long progress depends on many small and wise pauses.",
+        "Curiosity is the quiet engine behind all real learning.\n"
+        "Ask why things work, then ask how they could work better.\n"
+        "The best learners keep the open mind of a true beginner.\n"
+        "Each question you ask is a small door to a wider world.",
+    ],
+]
+
+_PARAGRAPH_POOLS_ES: list[list[str]] = [
+    [  # mecanografía
+        "Aprender a escribir bien te beneficia toda la vida.\n"
+        "Cada tecla que ahorras es un momento que recuperas.\n"
+        "Comienza con la fila inicial, deja que tus dedos aprendan,\n"
+        "y pronto escribirás sin mirar el teclado para nada.",
+        "Una buena postura hace que escribir sea más liviano.\n"
+        "Mantén las muñecas rectas y los codos cerca del cuerpo,\n"
+        "y los ojos a la altura de la parte alta de la pantalla.\n"
+        "Los buenos hábitos de hoy cuidan tus manos mañana.",
+        "Primero viene la precisión y después llega la velocidad.\n"
+        "Escribe cada letra con cuidado en lugar de apurarte.\n"
+        "Cuando tus dedos conocen el camino, se mueven solos,\n"
+        "y las palabras aparecen en la pantalla casi solas.",
+        "Un ritmo estable vence a las ráfagas de pura prisa.\n"
+        "Busca un paso tranquilo que puedas sostener un buen rato.\n"
+        "El teclado se vuelve un puente hacia tus propias ideas,\n"
+        "y escribes casi a la velocidad en que vas pensando.",
+        "Los errores son parte de la práctica, no un fracaso.\n"
+        "Fíjate en las teclas que te cuestan y repítelas más.\n"
+        "Cada sesión corta añade un poco de fuerza a tus manos,\n"
+        "y la habilidad se vuelve un hábito para toda la vida.",
+    ],
+    [  # naturaleza
+        "El bosque despierta despacio en el aire fresco del día.\n"
+        "La niebla cuelga entre los troncos y se va con la luz.\n"
+        "Un solo pájaro canta y otro le responde a lo lejos.\n"
+        "El día empieza su trabajo callado de crecer y renovar.",
+        "La lluvia llena el río y lo empuja fuera de su cauce.\n"
+        "El agua lleva hojas y ramas pequeñas hasta el mar.\n"
+        "Nada se pierde en el largo ciclo de las estaciones.\n"
+        "Cada gota encuentra el camino de regreso al océano.",
+        "Allá arriba en la sierra el viento nunca se aquieta.\n"
+        "Da forma a los árboles bajos y los dobla con su fuerza.\n"
+        "Abajo, el valle duerme bajo una niebla suave y baja.\n"
+        "La montaña guarda su silencio a lo largo de los años.",
+        "El desierto florece unas semanas brillantes al año.\n"
+        "Las semillas que esperaban en la tierra seca se abren.\n"
+        "El color se derrama sobre la arena y luego se apaga.\n"
+        "La vida aquí es breve, fuerte y está llena de sentido.",
+        "La marea retira el agua y deja una franja de arena.\n"
+        "Pequeños cangrejos cruzan el suelo mojado y brillante.\n"
+        "Las conchas se juntan donde las olas al fin se detienen.\n"
+        "La orilla respira con el tirón silencioso de la luna.",
+    ],
+    [  # tecnología
+        "Una computadora sirve tanto como quien sabe guiarla.\n"
+        "Aprende las ideas básicas antes de buscar lo más nuevo.\n"
+        "El pensamiento claro convierte la pantalla en un programa,\n"
+        "y la paciencia vuelve el código rudo en algo confiable.",
+        "Respalda tu trabajo antes de cambiar algo importante.\n"
+        "Una copia extra ha salvado más proyectos que un truco.\n"
+        "Anota lo que probaste y lo que aprendiste de ello.\n"
+        "Los buenos hábitos de hoy protegen muchas horas serenas.",
+        "Los mejores programas suelen ser los más fáciles de leer.\n"
+        "Elige nombres claros y divide las tareas en pasos cortos,\n"
+        "y prueba cada parte antes de unirla con la siguiente.\n"
+        "El código simple es más fácil de arreglar y de compartir.",
+        "Las redes llevan nuestras palabras por el mundo en un instante.\n"
+        "Un mensaje sale de tu pantalla y llega a un amigo lejano.\n"
+        "Detrás de ese acto simple hay capas de diseño cuidado,\n"
+        "hechas por mucha gente a lo largo de muchos años.",
+        "La automatización toma una tarea y la da a la máquina.\n"
+        "Lo que tomaba horas puede acabar en unos pocos segundos.\n"
+        "La parte difícil es describir los pasos con precisión,\n"
+        "pues la máquina sigue tus palabras tal como las escribiste.",
+    ],
+    [  # vida diaria / viajes
+        "El tren se mece suave mientras pasan despacio los campos.\n"
+        "Una bebida caliente te calienta las manos en la mañana.\n"
+        "Hay tiempo para leer, pensar o solo mirar el paisaje.\n"
+        "El viaje vuelve horas comunes en un regalo tranquilo.",
+        "Los mercados abren temprano con montones de fruta fresca.\n"
+        "Los vendedores gritan sus precios en un canto amable.\n"
+        "El olor del pan tibio sale de una tienda en la esquina.\n"
+        "Pasear despacio por los puestos es su propia alegría.",
+        "Las noches en casa tienen un encanto simple y muy quieto.\n"
+        "La cena hierve en la estufa mientras se pone la mesa.\n"
+        "La larga lista de tareas del día por fin llega a su fin.\n"
+        "Hay un consuelo real en estas horas tranquilas y propias.",
+        "Una caminata larga limpia el polvo que junta la mente.\n"
+        "Las mismas calles se ven distintas al aflojar el paso.\n"
+        "Notas puertas pequeñas, letreros viejos y jardines ocultos.\n"
+        "La ciudad comparte secretos con quien se detiene a mirar.",
+        "Hacer la maleta es el primer paso de cualquier viaje.\n"
+        "Eliges lo que importa y dejas el resto muy atrás.\n"
+        "Con menos para cargar, las manos y la mente se aligeran.\n"
+        "Pronto un lugar nuevo te recibirá con su propia luz clara.",
+    ],
+    [  # crecimiento / hábitos
+        "Un hábito nuevo empieza pequeño y crece con la práctica.\n"
+        "Cinco minutos hoy valen más que una hora al mes.\n"
+        "Aparece a la misma hora y el hábito echa raíces en ti.\n"
+        "Pronto el esfuerzo se desvanece y la acción se siente natural.",
+        "Leer un poco cada día cambia despacio cómo piensas.\n"
+        "Los libros llevan el trabajo fino de muchas vidas profundas.\n"
+        "Unas páginas por la mañana pueden calmar todo tu día.\n"
+        "Las ideas del libro regresan para ayudarte más adelante.",
+        "Escribir las cosas libera a la mente de tener que retenerlas.\n"
+        "Una lista corta vuelve una vaga inquietud en pasos claros.\n"
+        "Las notas atrapan los pensamientos antes de que se escapen.\n"
+        "Luego puedes repasar, afinar y actuar sobre lo que escribiste.",
+        "El descanso no es lo opuesto al trabajo sino parte callada.\n"
+        "Las manos cansadas cometen más errores y deciden más lento.\n"
+        "Un descanso corto devuelve el enfoque y la paciencia firme.\n"
+        "El avance largo depende de muchas pausas pequeñas y sabias.",
+        "La curiosidad es el motor callado de todo aprendizaje real.\n"
+        "Pregunta por qué funcionan las cosas y cómo podrían mejorar.\n"
+        "Los mejores alumnos guardan la mente abierta del novato.\n"
+        "Cada pregunta que haces es una puerta a un mundo más ancho.",
+    ],
+]
+
+
+def _paragraphs_plan(layout: Layout) -> list[_FluencyEntry]:
+    pools = _PARAGRAPH_POOLS_ES if layout.id == "es_la" else _PARAGRAPH_POOLS_EN
+    return [
+        (
+            "paragraph",
+            f"Paragraph: {_PARAGRAPH_THEMES[i]}",
+            _make_paragraph_builder(pool),
+        )
+        for i, pool in enumerate(pools)
+    ]
+
+
+def _make_paragraph_builder(pool: list[str]) -> _FluencyBuilder:
+    def builder(layout: Layout, layout_id: str, unit_index: int) -> tuple[Exercise, ...]:
+        seed_tag = _FLUENCY_SEED_TAG.format(layout_id=layout_id)
+        texts: list[str] = []
+        for ex_i in range(_PARAGRAPH_EXERCISE_COUNT):
+            rng = _seeded_rng(seed_tag, unit_index, ex_i)
+            texts.append(rng.choice(pool))
+        return tuple(Exercise(text=_finalize(t, layout, multiline=True)) for t in texts)
 
     return builder
