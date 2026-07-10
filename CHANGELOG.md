@@ -95,6 +95,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   is replaced wholesale by the forgiving model above. There is no opt-in
   toggle and no legacy code path — the forgiving model is the only model.
 
+### Fixed
+
+- **`tactile update` on Windows** (`__main__.py`): the update command no longer
+  fails with "Access is denied" (os error 5) when the running executable locks
+  the tool directory. On Windows, `_run_update` now creates a detached batch
+  updater that waits for tactile to exit, runs `uv tool install --force`, and
+  auto-deletes. The Unix path is unchanged.
+
 ## [0.1.0] - 2026-07-09
 
 The first tagged release: a terminal touch-typing trainer built with Textual.
