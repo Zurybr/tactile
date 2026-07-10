@@ -371,6 +371,7 @@ def _fluency_plan(layout: Layout, words: list[str]) -> list[_FluencyEntry]:
     plan: list[_FluencyEntry] = []
     plan.extend(_ngram_plan(layout))
     plan.extend(_common_words_plan(layout, words))
+    plan.extend(_sentences_plan(layout))
     return plan
 
 
@@ -561,5 +562,206 @@ def _make_common_words_builder(pool: list[str]) -> _FluencyBuilder:
             _COMMON_WORDS_EXERCISE_COUNT,
             _COMMON_WORDS_TARGET_LEN,
         )
+
+    return builder
+
+
+# ---- 3. Sentences ----------------------------------------------------------
+
+_SENTENCE_EXERCISE_COUNT = 4
+_SENTENCE_MIN_LEN = 45  # join 1-3 sentences until this length is reached
+
+# Eight pools of eight sentences each, per language. Content is original or
+# traditional/public-domain (proverbs). No copyrighted text.
+_SENTENCE_POOLS_EN: list[list[str]] = [
+    [  # practice & learning (original)
+        "Practice makes perfect when you show up every day.",
+        "Small steps taken daily add up to great distances.",
+        "The journey of a thousand miles begins with a single step.",
+        "Repetition is the mother of all learning.",
+        "Patience and steady effort win the race.",
+        "A slow start today becomes a fast finish tomorrow.",
+        "Focus on accuracy first and speed will follow.",
+        "Mistakes are proof that you are trying.",
+    ],
+    [  # common proverbs (traditional, public domain)
+        "The early bird catches the worm.",
+        "Actions speak louder than words.",
+        "A picture is worth a thousand words.",
+        "When in Rome do as the Romans do.",
+        "The pen is mightier than the sword.",
+        "Better late than never.",
+        "Look before you leap.",
+        "Every cloud has a silver lining.",
+    ],
+    [  # time & life (traditional/public domain + original)
+        "Time flies when you are having fun.",
+        "A stitch in time saves nine.",
+        "Time and tide wait for no one.",
+        "An apple a day keeps the doctor away.",
+        "The grass is always greener on the other side.",
+        "Rome was not built in a day.",
+        "Knowledge itself is a kind of power.",
+        "Two heads are better than one.",
+    ],
+    [  # nature (original)
+        "The river carved its path through the soft stone over many years.",
+        "Pine trees stand tall against the winter sky.",
+        "The morning sun warmed the quiet valley below.",
+        "Birds returned to the lake as the ice melted away.",
+        "A gentle breeze carried the scent of rain across the field.",
+        "The forest grows quiet when the snow begins to fall.",
+        "Waves rolled onto the empty beach at dawn.",
+        "Stars slowly appeared above the dark mountain ridge.",
+    ],
+    [  # technology (original)
+        "A good keyboard makes every keystroke feel lighter.",
+        "Save your work often to avoid losing progress.",
+        "The program ran faster after we cleaned up the code.",
+        "He wrote a short script to rename all the files.",
+        "Back up your data before you update the system.",
+        "The new laptop boots in just a few seconds.",
+        "Clear names make code easier to read later.",
+        "The team shipped the feature ahead of schedule.",
+    ],
+    [  # daily life (original)
+        "She poured coffee and opened her notebook for the day.",
+        "The train arrived just as the rain began to fall.",
+        "He packed a light bag and headed for the station.",
+        "They met at the corner cafe every Sunday morning.",
+        "The garden needed water after the long dry week.",
+        "Dinner was simple but warm and filling.",
+        "She locked the door and walked into the cool evening.",
+        "The children laughed as the kite climbed higher into the sky.",
+    ],
+    [  # wisdom / sayings (traditional, public domain)
+        "Honesty is the best policy in every season of life.",
+        "Do not put all your eggs in one basket.",
+        "A friend in need is a friend indeed.",
+        "The squeaky wheel gets the grease.",
+        "You cannot judge a book by its cover.",
+        "Necessity is the mother of invention.",
+        "Practice what you preach to those around you.",
+        "Where there is smoke there is usually fire.",
+    ],
+    [  # quick thoughts (original)
+        "Keep your notes close and your ideas even closer.",
+        "A clean desk helps to clear a tired mind.",
+        "Drink water and rest your eyes throughout the day.",
+        "Read a little every single day without fail.",
+        "Kind words cost nothing and mean a great deal.",
+        "The best time to start is right about now.",
+        "Finish what you begin before you start anew.",
+        "Curiosity turns beginners into true experts.",
+    ],
+]
+
+_SENTENCE_POOLS_ES: list[list[str]] = [
+    [  # práctica y aprendizaje (original)
+        "La práctica hace al maestro con el tiempo.",
+        "Quien no arriesga no gana ninguna partida.",
+        "El conocimiento es una forma de poder.",
+        "Aprender poco a poco lleva muy lejos.",
+        "La constancia vence al talento dormido.",
+        "Cada día trae una nueva oportunidad.",
+        "Los errores también enseñan lecciones.",
+        "La paciencia es la madre de la ciencia.",
+    ],
+    [  # refranes tradicionales (dominio público)
+        "No hay mal que por bien no venga.",
+        "Al mal tiempo hay que darle buena cara.",
+        "El que mucho abarca poco aprieta.",
+        "Más vale tarde que nunca en la vida.",
+        "Más vale pájaro en mano que ciento volando.",
+        "A buen entendedor pocas palabras bastan.",
+        "Más vale prevenir que tener que curar.",
+        "En boca cerrada no entran moscas.",
+    ],
+    [  # sabiduría (tradicional/dominio público + original)
+        "Dime con quién andas y te diré quién eres.",
+        "El que mucho sabe casi nunca habla demás.",
+        "A quien madruga Dios le ayuda en el camino.",
+        "No por mucho madrugar amanece más temprano.",
+        "Ojos que no ven corazón que no siente.",
+        "Quien siembra vientos recoge tempestades.",
+        "El hábito no hace al monje que lo lleva.",
+        "De la nada al todo hay mucho trecho aún.",
+    ],
+    [  # naturaleza (original)
+        "El río cortó la piedra con los años lentos.",
+        "Los pinos se alzaban bajo el cielo de invierno.",
+        "El sol de la mañana calentó el valle entero.",
+        "Las aves volvieron al lago al derretirse el hielo.",
+        "La brisa traía el olor fresco de la lluvia.",
+        "El bosque guarda silencio al caer la nieve.",
+        "Las olas llegaban a la playa casi vacía.",
+        "Las estrellas brillaban sobre la montaña oscura.",
+    ],
+    [  # tecnología (original)
+        "Un buen teclado aligera cada una de las teclas.",
+        "Guarda tu trabajo con mucha frecuencia.",
+        "El programa corrió más rápido al limpiar el código.",
+        "Escribió un script para renombrar los archivos.",
+        "Respalda tus datos antes de actualizar el sistema.",
+        "La computadora nueva enciende en pocos segundos.",
+        "Los nombres claros facilitan leer el código después.",
+        "El equipo entregó la función antes del plazo fijado.",
+    ],
+    [  # vida diaria (original)
+        "Sirvió café y abrió su cuaderno del día.",
+        "El tren llegó justo al empezar la lluvia.",
+        "Empacó una bolsa ligera y fue a la estación.",
+        "Se veían los domingos en la cafetería del barrio.",
+        "El jardín necesitaba agua tras la semana seca.",
+        "La cena fue sencilla pero cálida y buena.",
+        "Cerró la puerta y salió al fresco de la noche.",
+        "Los niños reían al subir la cometa al cielo.",
+    ],
+    [  # naturaleza humana / vida (original)
+        "La amabilidad no cuesta nada en absoluto.",
+        "Las palabras honestas abren muchas puertas.",
+        "Un buen hábito puede cambiar toda tu semana.",
+        "Caminar un rato despeja la mente cansada.",
+        "Leer un poco cada día enriquece el espíritu.",
+        "El orden del escritorio aclara las ideas.",
+        "Descansar la vista también es una forma de trabajar.",
+        "La curiosidad convierte a los novatos en expertos.",
+    ],
+    [  # pensamientos breves (original)
+        "Empieza hoy mismo lo que postergaste ayer.",
+        "Termina una cosa antes de empezar otra nueva.",
+        "Bebe agua y respira hondo varias veces al día.",
+        "Escribe tus ideas antes de que se vuelen.",
+        "La práctica diaria construye gran destreza.",
+        "Un paso pequeño también es un avance válido.",
+        "Escucha con atención antes de responder nada.",
+        "La gratitud cambia el ánimo de todo el día.",
+    ],
+]
+
+
+def _sentences_plan(layout: Layout) -> list[_FluencyEntry]:
+    pools = _SENTENCE_POOLS_ES if layout.id == "es_la" else _SENTENCE_POOLS_EN
+    return [
+        ("sentence", f"Sentences {i + 1}", _make_sentence_builder(pool))
+        for i, pool in enumerate(pools)
+    ]
+
+
+def _make_sentence_builder(pool: list[str]) -> _FluencyBuilder:
+    def builder(layout: Layout, layout_id: str, unit_index: int) -> tuple[Exercise, ...]:
+        seed_tag = _FLUENCY_SEED_TAG.format(layout_id=layout_id)
+        texts: list[str] = []
+        for ex_i in range(_SENTENCE_EXERCISE_COUNT):
+            rng = _seeded_rng(seed_tag, unit_index, ex_i)
+            chosen: list[str] = []
+            length = 0
+            # join 1-3 sentences until the target length is reached
+            while length < _SENTENCE_MIN_LEN and len(chosen) < 3:
+                sentence = rng.choice(pool)
+                chosen.append(sentence)
+                length += len(sentence) + 1
+            texts.append(" ".join(chosen))
+        return tuple(Exercise(text=_finalize(t, layout)) for t in texts)
 
     return builder
