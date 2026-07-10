@@ -16,6 +16,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `pip install --upgrade --force-reinstall` when `uv` is not on PATH; any
   installer failure prints to stderr and exits 1. Documented in
   `docs/reference/cli.md`.
+- **Cross-platform install scripts** (`install.ps1`, `install.sh`): one-line
+  installers for Windows (PowerShell) and Linux/Mac (bash). Each installs
+  `uv` first if it is missing, then runs
+  `uv tool install git+https://github.com/Zurybr/tactile`. Documented in
+  `README.md`.
 
 - **Forgiving error model** (`engine.py`): a wrong key now ADVANCES the
   cursor (the learner types past mistakes), backspace ERASES the recorded
