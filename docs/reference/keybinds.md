@@ -24,9 +24,9 @@ While in `PracticeScreen`, printable characters are sent to the
 
 | Key | Engine call | Effect |
 |-----|-------------|--------|
-| printable char | `session.on_key(char)` | Advance if correct; otherwise record an error and stay. |
+| printable char | `session.on_key(char)` | Advance always; record an error if the key is wrong. |
 | `enter` | `session.on_key("\n")` | Satisfy a `\n` in the target (code practice / multi-line). |
-| `backspace` | `session.on_backspace()` | Step back one position if possible. Does not erase recorded errors. |
+| `backspace` | `session.on_backspace()` | Step back one position if possible. Erases the recorded error at that position so it can be re-evaluated. |
 
 Every handled typing key calls `event.stop()` so that screen bindings do not
 fire mid-typing. `escape` is intentionally let through to its binding so you
