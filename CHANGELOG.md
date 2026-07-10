@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Self-update subcommand** (`__main__.py`): `tactile update` reinstalls
+  tactile from the latest `main` branch on GitHub
+  (`git+https://github.com/Zurybr/tactile`). It prefers
+  `uv tool install --force` and falls back to
+  `pip install --upgrade --force-reinstall` when `uv` is not on PATH; any
+  installer failure prints to stderr and exits 1. Documented in
+  `docs/reference/cli.md`.
+
 - **Forgiving error model** (`engine.py`): a wrong key now ADVANCES the
   cursor (the learner types past mistakes), backspace ERASES the recorded
   error so the position can be re-evaluated, and a corrected position earns
