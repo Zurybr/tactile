@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Forgiving error model** (`engine.py`): a wrong key now ADVANCES the
+  cursor (the learner types past mistakes), backspace ERASES the recorded
+  error so the position can be re-evaluated, and a corrected position earns
+  0.5 partial credit (first-try = 1.0, never-corrected = 0.0). Live
+  accuracy reflects only attempted-so-far characters; final accuracy uses
+  the full target length. Net WPM uses credited chars. Star thresholds
+  (90/95/97/99) are unchanged; only the accuracy + net_wpm that feed them
+  changed. The full cascade (error -> `_ever_errored` -> accuracy ->
+  net_wpm -> stars -> record) is internally consistent. Documented in
+  `docs/engineering/engine.md`.
 - **Free lesson navigation** (`progress.py`, `screens/lesson_map.py`): any
   lesson, review, or speedtest is attemptable in any order — `is_unlocked`
   is always `True` and no lesson-map row is disabled. Completing a lesson
@@ -30,6 +40,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Accuracy + net WPM formulas** (`engine.py`): accuracy now weights
+  positions (first-try 1.0, corrected 0.5, uncorrected 0.0) instead of
+  counting keystrokes; net WPM uses credited chars instead of `position`.
+  Required because wrong keys now advance the cursor (so `position` no
+  longer equals the correct count). Gross WPM is unchanged.
 - **Progress schema v1 -> v2** (`progress.py`): adds a top-level `settings`
   object (default `{}`). Legacy v1 files migrate forward losslessly on load
   (version bumped to 2, `settings` added if absent, all stars / bests /
@@ -44,6 +59,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   wikilinks from `docs/index.md` and verifies every link resolves to a file
   under `docs/`. Run with `uv run python scripts/validate_docs.py` before
   pushing.
+
+### Removed
+
+- **Edclub hold-cursor error model** (`engine.py`): the previous behaviour
+  (cursor held on wrong key; every wrong attempt counted against accuracy)
+  is replaced wholesale by the forgiving model above. There is no opt-in
+  toggle and no legacy code path — the forgiving model is the only model.
 
 ## [0.1.0] - 2026-07-09
 
