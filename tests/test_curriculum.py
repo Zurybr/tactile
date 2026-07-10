@@ -281,4 +281,31 @@ def test_sentence_exercises_are_prose_single_line(layout_id):
                 assert layout.typable(c), (unit.id, c)
 
 
+@pytest.mark.parametrize("layout_id", ["en_us", "es_la"])
+def test_paragraph_fluency_units_present(layout_id):
+    layout = LAYOUTS[layout_id]
+    units = build_curriculum(layout, _SAMPLE_WORDS)
+    paras = [u for u in _fluency(units) if u.kind == "paragraph"]
+    assert len(paras) >= 5, layout_id
+
+
+@pytest.mark.parametrize("layout_id", ["en_us", "es_la"])
+def test_paragraph_exercises_are_multiline_and_typable(layout_id):
+    layout = LAYOUTS[layout_id]
+    units = build_curriculum(layout, _SAMPLE_WORDS)
+    for unit in [u for u in _fluency(units) if u.kind == "paragraph"]:
+        assert 2 <= len(unit.exercises) <= 3, unit.id
+        for ex in unit.exercises:
+            # paragraphs must preserve newlines (the multiline finalize path)
+            assert "\n" in ex.text, (unit.id, ex.text)
+            lines = ex.text.split("\n")
+            assert 3 <= len(lines) <= 6, (unit.id, len(lines), ex.text)
+            for line in lines:
+                assert line == line.strip(), (unit.id, line)
+                assert "  " not in line, (unit.id, line)
+            for c in ex.text:
+                assert layout.typable(c), (unit.id, c)
+
+
+
 
