@@ -370,6 +370,7 @@ def _fluency_plan(layout: Layout, words: list[str]) -> list[_FluencyEntry]:
     """Ordered fluency plan for a layout. Append new types here in pedagogical order."""
     plan: list[_FluencyEntry] = []
     plan.extend(_ngram_plan(layout))
+    plan.extend(_common_words_plan(layout, words))
     return plan
 
 
@@ -487,6 +488,78 @@ def _make_ngram_builder(grams: list[str]) -> _FluencyBuilder:
             grams,
             _NGRAM_EXERCISE_COUNT,
             _NGRAM_TARGET_LEN,
+        )
+
+    return builder
+
+
+# ---- 2. Common words tiers -------------------------------------------------
+
+_COMMON_WORDS_EXERCISE_COUNT = 3
+_COMMON_WORDS_TARGET_LEN = 50
+
+# Top-frequency English words (public-domain frequency-list selection).
+_COMMON_EN = [
+    "the", "be", "to", "of", "and", "a", "in", "that", "have", "it",
+    "for", "not", "on", "with", "he", "as", "you", "do", "at", "this",
+    "but", "his", "by", "from", "they", "we", "say", "her", "she", "or",
+    "an", "will", "my", "one", "all", "would", "there", "their", "what",
+    "so", "up", "out", "if", "about", "who", "get", "which", "go", "me",
+    "when", "make",
+    "can", "like", "time", "no", "just", "him", "know", "take", "people",
+    "into", "year", "your", "good", "some", "could", "them", "see",
+    "other", "than", "then", "now", "look", "only", "come", "its",
+    "over", "think", "also", "back", "after", "use", "two", "how",
+    "our", "work", "first", "well", "way", "even", "new", "want",
+    "because", "any", "these", "give", "day", "most", "us",
+]
+
+# Top-frequency Spanish words (public-domain frequency-list selection).
+_COMMON_ES = [
+    "el", "la", "de", "que", "y", "en", "un", "ser", "con", "por",
+    "para", "no", "haber", "poder", "decir", "este", "hacer", "todo",
+    "mucho", "también", "saber", "ver", "su", "yo", "venir", "donde",
+    "bien", "tiempo", "mismo", "ya", "cosa", "vida", "dar", "mundo",
+    "creer", "pues", "ello", "tras", "ojo", "año",
+    "encontrarse", "agua", "casa", "seguridad", "sentir", "gran",
+    "tipo", "semana", "blanco", "ciudad", "imagen", "dinero", "bailar",
+]
+
+
+def _common_words_plan(layout: Layout, words: list[str]) -> list[_FluencyEntry]:
+    base = _COMMON_ES if layout.id == "es_la" else _COMMON_EN
+    # Three frequency tiers: top half, full curated list, curated + wordlist.
+    tier1 = base[: max(1, len(base) // 2)]
+    tier2 = base
+    extra = [w for w in words if w not in base]
+    tier3 = base + extra
+    tiers = [
+        ("top words I", tier1),
+        ("top words II", tier2),
+        ("top words III", tier3),
+    ]
+    plan: list[_FluencyEntry] = []
+    for tier_label, pool in tiers:
+        for part in ("a", "b"):
+            plan.append(
+                (
+                    "common_words",
+                    f"Common words: {tier_label} ({part})",
+                    _make_common_words_builder(pool),
+                )
+            )
+    return plan
+
+
+def _make_common_words_builder(pool: list[str]) -> _FluencyBuilder:
+    def builder(layout: Layout, layout_id: str, unit_index: int) -> tuple[Exercise, ...]:
+        return _sample_exercises(
+            layout,
+            layout_id,
+            unit_index,
+            pool,
+            _COMMON_WORDS_EXERCISE_COUNT,
+            _COMMON_WORDS_TARGET_LEN,
         )
 
     return builder
