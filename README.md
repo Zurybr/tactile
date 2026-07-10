@@ -4,13 +4,45 @@ A terminal touch-typing trainer built with [Textual](https://textual.textualize.
 
 ![Python](https://img.shields.io/badge/python-%E2%89%A5%203.12-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
-![Tests](https://img.shields.io/badge/tests-76%20passed-brightgreen)
+![Tests](https://img.shields.io/badge/tests-108%20passed-brightgreen)
 
 tactile teaches touch typing with progressive lessons that introduce keys
 outward from the home row (edclub/TypingClub style). It shows live WPM and
 accuracy, rates each unit 1-5 stars, unlocks the next unit at >=2 stars, and
 renders an on-screen keyboard with finger and modifier hints. It also turns
 any code or text file into typing practice.
+
+## Installation
+
+**Install (Windows — PowerShell):**
+
+```powershell
+irm https://raw.githubusercontent.com/Zurybr/tactile/main/install.ps1 | iex
+```
+
+**Install (Linux/Mac):**
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/Zurybr/tactile/main/install.sh | bash
+```
+
+Both one-liners install [uv](https://docs.astral.sh/uv/) first if it is
+missing, then run `uv tool install git+https://github.com/Zurybr/tactile`.
+
+**Manual install (requires Python 3.12+):**
+
+```sh
+uv tool install git+https://github.com/Zurybr/tactile
+```
+
+**Update to the latest version:**
+
+```sh
+tactile update
+```
+
+See [`docs/reference/cli.md`](docs/reference/cli.md) for the `update`
+subcommand details.
 
 ## Features
 
@@ -39,7 +71,7 @@ Screenshots will be added here. *(No images are bundled yet.)*
 - **Python >= 3.12**
 - **[uv](https://docs.astral.sh/uv/)** (package manager and build backend)
 
-## Installation
+## Development setup
 
 ```sh
 uv sync
@@ -47,6 +79,8 @@ uv sync
 
 This creates a `.venv`, installs `tactile` and its single runtime dependency
 (`textual>=0.60`), and the `dev` dependency group (`pytest`, `pytest-asyncio`).
+Use this for working on tactile locally; end users should use the
+[Installation](#installation) one-liners above.
 
 ## Usage
 
@@ -100,7 +134,7 @@ per-layout in `~/.tactile/progress.json`.
 ```
 src/tactile/
 ├── __init__.py          # package version
-├── __main__.py          # CLI entry point (argparse: practice <path>, --version)
+├── __main__.py          # CLI entry point (argparse: practice <path>, update, --version)
 ├── app.py               # TactileApp shell: wires progression, content, screens
 ├── engine.py            # TypingSession: pure typing logic, cursor model, stars
 ├── curriculum.py        # build_curriculum: deterministic, layout-aware units
