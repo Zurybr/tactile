@@ -307,5 +307,40 @@ def test_paragraph_exercises_are_multiline_and_typable(layout_id):
                 assert layout.typable(c), (unit.id, c)
 
 
+@pytest.mark.parametrize("layout_id", ["en_us", "es_la"])
+def test_number_fluency_units_present(layout_id):
+    layout = LAYOUTS[layout_id]
+    units = build_curriculum(layout, _SAMPLE_WORDS)
+    num_units = [u for u in _fluency(units) if u.kind == "number"]
+    assert len(num_units) >= 3, layout_id
+    all_text = " ".join(ex.text for u in num_units for ex in u.exercises)
+    assert any(c.isdigit() for c in all_text)
+
+
+@pytest.mark.parametrize("layout_id", ["en_us", "es_la"])
+def test_symbol_fluency_units_present_and_typable(layout_id):
+    layout = LAYOUTS[layout_id]
+    units = build_curriculum(layout, _SAMPLE_WORDS)
+    sym = [u for u in _fluency(units) if u.kind == "symbol"]
+    assert len(sym) >= 3, layout_id
+    for unit in sym:
+        assert 3 <= len(unit.exercises) <= 5, unit.id
+        for ex in unit.exercises:
+            assert "\n" not in ex.text
+            for c in ex.text:
+                assert layout.typable(c), (unit.id, c)
+
+
+def test_es_la_symbol_units_never_contain_backslash():
+    # The es_la layout cannot type a backslash, so symbol drills must never
+    # produce one (filters must drop it before drilling).
+    layout = LAYOUTS["es_la"]
+    units = build_curriculum(layout, _SAMPLE_WORDS)
+    for unit in [u for u in _fluency(units) if u.kind == "symbol"]:
+        for ex in unit.exercises:
+            assert "\\" not in ex.text, (unit.id, ex.text)
+
+
+
 
 
