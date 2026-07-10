@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="docs/assets/tactile-icon.svg" width="200" alt="tactile" />
+</p>
+
 # tactile
 
 A terminal touch-typing trainer built with [Textual](https://textual.textualize.io/).

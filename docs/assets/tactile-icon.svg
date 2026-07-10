@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="3840" height="3840">
+  <!-- Fondo oscuro y borde exterior blanco -->
+  <rect x="24" y="24" width="464" height="464" rx="72" fill="#1a1a1a" stroke="#ffffff" stroke-width="24"/>
+
+  <!-- Símbolos del Prompt -->
+  <polyline points="100,130 160,190 100,250" fill="none" stroke="#ffffff" stroke-width="28" stroke-linecap="round" stroke-linejoin="round"/>
+  <line x1="180" y1="250" x2="260" y2="250" stroke="#ffffff" stroke-width="28" stroke-linecap="round"/>
+
+  <!-- Bloques Inferiores (Sin texto) -->
+  <!-- Cuadrado Izquierdo -->
+  <rect x="96" y="320" width="88" height="88" rx="12" fill="#000000" stroke="#ffffff" stroke-width="12"/>
+  
+  <!-- Cuadrado Central (Verde) -->
+  <rect x="212" y="320" width="88" height="88" rx="12" fill="#a2d149"/>
+  <!-- Letra 'H' -->
+  <path d="M 240 344 L 240 384 M 272 344 L 272 384 M 240 364 L 272 364" fill="none" stroke="#1a1a1a" stroke-width="16" stroke-linecap="square"/>
+  
+  <!-- Cuadrado Derecho -->
+  <rect x="328" y="320" width="88" height="88" rx="12" fill="#000000" stroke="#ffffff" stroke-width="12"/>
+</svg>

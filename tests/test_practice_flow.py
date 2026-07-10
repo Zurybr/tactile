@@ -130,3 +130,30 @@ async def test_escape_returns_to_map_without_recording(tmp_path: Path):
         await pilot.pause()
         assert app.screen.__class__.__name__ == "LessonMapScreen"
         assert app.store.stars_for("en_us", unit.id) == 0
+
+
+async def test_correct_chars_render_green_wrong_chars_render_red(tmp_path: Path):
+    """Typed characters are colored: green for correct, red for uncorrected errors."""
+    app = TactileApp(progress_path=tmp_path / "p.json")
+    async with app.run_test() as pilot:
+        await _open_unit_one(pilot)
+        session = app.screen.session
+
+        # Type the correct first key (whatever the exercise expects).
+        first = session.expected
+        key = "space" if first == " " else ("enter" if first == "\n" else first)
+        await pilot.press(key)
+        await pilot.pause()
+
+        # Type a wrong key (q is never in unit 1's f/j/space pool).
+        await pilot.press("q")
+        await pilot.pause()
+
+        # Inspect span styles — span.style is a str in this rich version.
+        text = app.screen._build_text()
+        styles = [str(span.style) for span in text.spans]
+
+        assert any("green" in s for s in styles), \
+            f"Expected green for the correct char, got: {styles}"
+        assert any("red" in s for s in styles), \
+            f"Expected red for the wrong char, got: {styles}"

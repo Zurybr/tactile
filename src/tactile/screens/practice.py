@@ -188,15 +188,26 @@ class PracticeScreen(Screen):
         stats = self.query_one("#practice-stats", Static)
         stats.update(f"WPM {self.session.net_wpm:5.1f}   ACC {self.session.accuracy:5.1f}%")
 
-    def _refresh_text(self) -> None:
+    def _build_text(self) -> Text:
+        """Build the colored practice text for the current session state.
+
+        Typed characters are green (correct) or red (uncorrected error).
+        The cursor position is highlighted with reverse video. Remaining
+        characters are dim.
+        """
         target = self.unit.exercises[self.exercise_index].text
         position = self.session.position
         text = Text()
-        text.append(target[:position], style="green")
+        for i in range(position):
+            style = "red" if i in self.session.error_positions else "green"
+            text.append(target[i], style=style)
         if position < len(target):
             cursor_char = target[position]
-            cursor_display = "⏎\n" if cursor_char == "\n" else cursor_char
+            cursor_display = "\u23ce\n" if cursor_char == "\n" else cursor_char
             cursor_style = "reverse red" if self._last_key_was_wrong else "reverse"
             text.append(cursor_display, style=cursor_style)
             text.append(target[position + 1 :], style="dim")
-        self.query_one("#practice-text", Static).update(text)
+        return text
+
+    def _refresh_text(self) -> None:
+        self.query_one("#practice-text", Static).update(self._build_text())
