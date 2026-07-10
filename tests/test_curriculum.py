@@ -4,7 +4,13 @@ from __future__ import annotations
 
 import pytest
 
-from tactile.curriculum import build_curriculum, build_fluency_track, load_wordlist
+from tactile.curriculum import (
+    _FLUENCY_MAX_LEN,
+    _FLUENCY_MIN_LEN,
+    build_curriculum,
+    build_fluency_track,
+    load_wordlist,
+)
 from tactile.layouts import LAYOUTS
 
 _SAMPLE_WORDS = [
@@ -216,4 +222,39 @@ def test_ngram_fluency_units_present_and_well_formed(layout_id):
             assert "\n" not in ex.text
             assert ex.text == ex.text.strip()
             assert "  " not in ex.text
+
+
+def test_fluency_exercise_lengths_within_bounds():
+    for layout_id in ("en_us", "es_la"):
+        layout = LAYOUTS[layout_id]
+        units = build_curriculum(layout, _SAMPLE_WORDS)
+        for unit in _fluency(units):
+            for ex in unit.exercises:
+                assert _FLUENCY_MIN_LEN <= len(ex.text) <= _FLUENCY_MAX_LEN, (
+                    unit.id,
+                    ex.text,
+                )
+
+
+@pytest.mark.parametrize("layout_id", ["en_us", "es_la"])
+def test_common_words_fluency_units_present(layout_id):
+    layout = LAYOUTS[layout_id]
+    units = build_curriculum(layout, _SAMPLE_WORDS)
+    cw = [u for u in _fluency(units) if u.kind == "common_words"]
+    assert len(cw) >= 6, layout_id
+
+
+@pytest.mark.parametrize("layout_id", ["en_us", "es_la"])
+def test_common_words_exercises_are_single_line_typable_words(layout_id):
+    layout = LAYOUTS[layout_id]
+    units = build_curriculum(layout, _SAMPLE_WORDS)
+    for unit in [u for u in _fluency(units) if u.kind == "common_words"]:
+        assert 3 <= len(unit.exercises) <= 5, unit.id
+        for ex in unit.exercises:
+            assert "\n" not in ex.text
+            assert ex.text == ex.text.strip()
+            assert "  " not in ex.text
+            for c in ex.text:
+                assert layout.typable(c), (unit.id, c)
+
 
