@@ -375,6 +375,7 @@ def _fluency_plan(layout: Layout, words: list[str]) -> list[_FluencyEntry]:
     plan.extend(_paragraphs_plan(layout))
     plan.extend(_numbers_plan(layout))
     plan.extend(_symbols_plan(layout))
+    plan.extend(_code_plan(layout))
     return plan
 
 
@@ -1080,3 +1081,70 @@ def _symbols_plan(layout: Layout) -> list[_FluencyEntry]:
         ("symbol", "Symbols: brackets", _make_drill_builder(brackets, 4, 30)),
         ("symbol", "Symbols: operators", _make_drill_builder(ops, 4, 30)),
     ]
+
+
+# ---- 7. Code snippets (en_us only) -----------------------------------------
+
+# Code is English-only: the es_la layout cannot type a backslash and several
+# code exercises lean on the full ASCII symbol set. Curated, original
+# patterns (no copyrighted source).
+_CODE_EXERCISE_COUNT = 4
+_CODE_TITLES = [
+    "Code: Python imports & defs",
+    "Code: Python classes",
+    "Code: JavaScript",
+    "Code: Mixed patterns",
+]
+_CODE_POOLS_EN: list[list[str]] = [
+    [  # python imports & defs
+        "import os\nfrom pathlib import Path\ndef main():\n    print('ready')",
+        "import sys\nimport json\ndef load(path):\n    return open(path).read()",
+        "from math import sqrt\ndef distance(x, y):\n    return sqrt(x * x + y * y)",
+        "import time\ndef now():\n    return int(time.time())",
+    ],
+    [  # python classes
+        "class Dog:\n    def __init__(self, name):\n        self.name = name",
+        "class Cat:\n    def speak(self):\n        return 'meow'",
+        "class Book:\n    def __init__(self, title):\n        self.title = title",
+        "class Cart:\n    def add(self, item):\n        self.items.append(item)",
+    ],
+    [  # javascript
+        "const sum = (a, b) => {\n    return a + b;\n};\nconsole.log(sum(1, 2));",
+        "const greet = (name) => {\n    return 'hi ' + name;\n};",
+        "let total = 0;\nfor (let i = 0; i < 5; i++) {\n    total += i;\n}",
+        "const square = (n) => {\n    return n * n;\n};\nconsole.log(square(4));",
+    ],
+    [  # mixed patterns
+        "if (x > 0) {\n    return x * 2;\n} else {\n    return -x;\n}",
+        "while count < 10:\n    count += 1\n    print(count)",
+        "function add(a, b) {\n    return a + b;\n}",
+        "try:\n    value = data['key']\nexcept KeyError:\n    value = None",
+    ],
+]
+
+
+def _code_plan(layout: Layout) -> list[_FluencyEntry]:
+    if layout.id != "en_us":
+        return []
+    return [
+        ("code", _CODE_TITLES[i], _make_code_builder(pool))
+        for i, pool in enumerate(_CODE_POOLS_EN)
+    ]
+
+
+def _make_code_builder(pool: list[str]) -> _FluencyBuilder:
+    def builder(layout: Layout, layout_id: str, unit_index: int) -> tuple[Exercise, ...]:
+        seed_tag = _FLUENCY_SEED_TAG.format(layout_id=layout_id)
+        rng = _seeded_rng(seed_tag, unit_index, 0)
+        order = list(pool)
+        rng.shuffle(order)
+        # pad with extra picks if the pool is smaller than the exercise count
+        picks = order[: _CODE_EXERCISE_COUNT]
+        while len(picks) < _CODE_EXERCISE_COUNT:
+            picks.append(rng.choice(pool))
+        return tuple(
+            Exercise(text=_finalize(t, layout, multiline=True, keep_indent=True))
+            for t in picks
+        )
+
+    return builder

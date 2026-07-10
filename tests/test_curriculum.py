@@ -341,6 +341,32 @@ def test_es_la_symbol_units_never_contain_backslash():
             assert "\\" not in ex.text, (unit.id, ex.text)
 
 
+def test_code_fluency_units_present_en_us_only():
+    us_units = build_curriculum(LAYOUTS["en_us"], _SAMPLE_WORDS)
+    code = [u for u in _fluency(us_units) if u.kind == "code"]
+    assert len(code) >= 4
+    es_units = build_curriculum(LAYOUTS["es_la"], _SAMPLE_WORDS)
+    assert not [u for u in _fluency(es_units) if u.kind == "code"], (
+        "code units are en_us only (es_la cannot type all code symbols)"
+    )
+
+
+def test_code_exercises_preserve_newlines_and_indentation():
+    layout = LAYOUTS["en_us"]
+    units = build_curriculum(layout, _SAMPLE_WORDS)
+    for unit in [u for u in _fluency(units) if u.kind == "code"]:
+        assert 3 <= len(unit.exercises) <= 5, unit.id
+        for ex in unit.exercises:
+            # code is multi-line and keeps leading indentation
+            assert "\n" in ex.text, (unit.id, ex.text)
+            lines = ex.text.split("\n")
+            assert any(line.startswith("    ") for line in lines), (unit.id, ex.text)
+            assert ex.text == ex.text.strip("\n")
+            for c in ex.text:
+                assert layout.typable(c), (unit.id, c)
+
+
+
 
 
 
